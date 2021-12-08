@@ -4,8 +4,8 @@
 
 #include "device.h"
 #include "scope.h"
-/*#include "wavegen.h"
-#include "supplies.h"
+#include "wavegen.h"
+/*#include "supplies.h"
 #include "dmm.h"
 #include "logic.h"
 #include "pattern.h"
