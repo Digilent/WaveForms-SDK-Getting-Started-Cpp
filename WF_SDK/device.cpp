@@ -5,15 +5,17 @@
 
 /* ----------------------------------------------------- */
 
-HDWF device::open(string* device_name, string device = "") {
+device_data Device::open(string device = "") {
     /*
         open a specific device
 
-        parameters: - pointer to the device name
-                    - device type: None (first device), "Analog Discovery", "Analog Discovery 2", "Analog Discovery Studio", "Digital Discovery", "Analog Discovery Pro 3X50", "Analog Discovery Pro 5250"
+        parameters: - device type: None (first device), "Analog Discovery", "Analog Discovery 2", "Analog Discovery Studio", "Digital Discovery", "Analog Discovery Pro 3X50", "Analog Discovery Pro 5250"
         
         returns:    - the device handle
+                    - the device name
     */
+    device_data dev;
+
     map<string, int> device_names;
         device_names["Analog Discovery"] = devidDiscovery;
         device_names["Analog Discovery 2"] = devidDiscovery2;
@@ -47,18 +49,18 @@ HDWF device::open(string* device_name, string device = "") {
     }
 
     // this is the device handle - it will be used by all functions to "address" the connected device
-    int device_handle = 0;
+    dev.handle = 0;
 
     // connect to the first available device
     HDWF index = 0;
-    while (device_handle == 0 && index < device_count) {
-        FDwfDeviceOpen(index, &device_handle);
+    while (dev.handle == 0 && index < device_count) {
+        FDwfDeviceOpen(index, &dev.handle);
         index++;    // increment the index and try again if the device is busy
     }
 
     // check connected device type
-    *device_name = "";
-    if (device_handle != 0) {
+    dev.name = "";
+    if (dev.handle != 0) {
         int device_id = 0;
         int device_rev = 0;
         FDwfEnumDeviceType(index - 1, &device_id, &device_rev);
@@ -66,17 +68,17 @@ HDWF device::open(string* device_name, string device = "") {
         // decode device id
         for(map<string, int>::iterator pair = device_names.begin(); pair != device_names.end(); ++pair) {
             if (device_id == pair -> second) {
-                *device_name = pair -> first;
+                dev.name = pair -> first;
                 break;
             }
         }
     }
-    return device_handle;
+    return dev;
 }
 
 /* ----------------------------------------------------- */
 
-void device::check_error(HDWF device_handle) {
+void Device::check_error(HDWF device_handle) {
     /*
         check for connection errors
     */
@@ -100,7 +102,7 @@ void device::check_error(HDWF device_handle) {
 
 /* ----------------------------------------------------- */
 
-void device::close(HDWF device_handle) {
+void Device::close(HDWF device_handle) {
     /*
         close a specific device
     */

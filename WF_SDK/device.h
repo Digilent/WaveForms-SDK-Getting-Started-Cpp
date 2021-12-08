@@ -19,9 +19,18 @@ using namespace std;
 
 /* ----------------------------------------------------- */
 
-class device {
+struct Device_Data {
+    HDWF handle;
+    string name;
+};
+
+typedef struct Device_Data device_data;
+
+/* ----------------------------------------------------- */
+
+class Device {
     public:
-        HDWF open(string* device_name, string device = "");
+        device_data open(string device = "");
         void check_error(HDWF device_handle);
         void close(HDWF device_handle);
-};
+} device;
