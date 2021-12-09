@@ -101,7 +101,7 @@ double DMM::measure(HDWF device_handle, string mode, bool ac, double range, bool
     // get reading
     double measurement = 0;
     FDwfAnalogIOChannelNodeStatus(device_handle, 3, 3, &measurement);
-    return measurement
+    return measurement;
 }
 
 /* ----------------------------------------------------- */
