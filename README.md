@@ -33,7 +33,7 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 * switch_digital (for Digital Discovery and Analog Discovery Pro 3X50)
 * switch_6V (for Analog Discovery Pro 5250)
 * switch_25V (for Analog Discovery Pro 5250)
-* Switch
+* switch_
 * close
 
 ### Digital Multimeter
