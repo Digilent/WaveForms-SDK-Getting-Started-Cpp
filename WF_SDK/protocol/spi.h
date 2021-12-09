@@ -1,6 +1,9 @@
 /* PROTOCOL: SPI CONTROL FUNCTIONS: open, read, write, exchange, spy, close */
 
 /* include the necessary libraries */
+#include <string>
+
+using namespace std;
 
 /* include the constants and the WaveForms function library */
 #ifdef WIN32
@@ -13,7 +16,23 @@
 
 /* ----------------------------------------------------- */
 
+struct SPI_Data {
+    int* mosi;
+    int* miso;
+};
+
+typedef struct SPI_Data spi_data;
+
+/* ----------------------------------------------------- */
+
 class SPI {
     public:
-        
+        void open(HDWF device_handle, int cs, int sck, int miso = -1, int mosi = -1, double clk_frequency = 1e06, int mode = 0, bool order = true);
+        int* read(HDWF device_handle, int count, int cs);
+        void write(HDWF device_handle, string data, int cs);
+        void write(HDWF device_handle, int* data, int cs);
+        int* exchange(HDWF device_handle, string data, int count, int cs);
+        int* exchange(HDWF device_handle, int* data, int count, int cs);
+        spi_data spy(HDWF device_handle, int count, int cs, int sck, int mosi = -1, int miso = -1, int word_size = 8);
+        void close(HDWF device_handle);
 } spi;
