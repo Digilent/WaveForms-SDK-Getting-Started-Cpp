@@ -10,6 +10,6 @@
 #include "logic.h"
 #include "pattern.h"
 #include "static.h"
-/*#include "protocol/uart.h"
+#include "protocol/uart.h"
 #include "protocol/spi.h"
-#include "protocol/i2c.h"*/
+#include "protocol/i2c.h"

@@ -58,3 +58,26 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 * set_current
 * set_pull
 * close
+
+### Protocol
+#### UART
+* open
+* read
+* write
+* close
+
+#### SPI
+* open
+* read
+* write
+* echange
+* spy
+* close
+
+#### I2C
+* open
+* read
+* write
+* echange
+* spy
+* close
