@@ -38,7 +38,7 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 
 ### Digital Multimeter
 * open
-* measure - **UNTESTED**
+* measure
 * close
 
 ### Logic Analyzer
@@ -49,4 +49,12 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 
 ### Pattern Generator
 * generate
+* close
+
+### Static I/O
+* set_mode
+* get_state
+* set_state
+* set_current
+* set_pull
 * close
