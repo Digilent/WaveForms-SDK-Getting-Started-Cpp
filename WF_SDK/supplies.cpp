@@ -140,7 +140,7 @@ void Supplies::switch_25V(HDWF device_handle, bool positive_state, bool negative
 
 /* ----------------------------------------------------- */
 
-bool Supplies::Switch(HDWF device_handle, supplies_data state) {
+bool Supplies::switch_(HDWF device_handle, supplies_data state) {
     /*
         turn the power supplies on/off
 

@@ -42,6 +42,6 @@ class Supplies {
         void switch_digital(HDWF device_handle, bool master_state, double voltage);
         void switch_6V(HDWF device_handle, bool master_state, double voltage, double current = 1);
         void switch_25V(HDWF device_handle, bool positive_state, bool negative_state, double positive_voltage, double negative_voltage, double positive_current = 0.5, double negative_current = -0.5);
-        bool Switch(HDWF device_handle, supplies_data state);
+        bool switch_(HDWF device_handle, supplies_data state);
         void close(HDWF device_handle);
 } supplies;
