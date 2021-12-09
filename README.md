@@ -46,3 +46,7 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 * trigger
 * record
 * close
+
+### Pattern Generator
+* generate
+* close
