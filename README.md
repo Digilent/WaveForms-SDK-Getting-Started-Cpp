@@ -40,3 +40,9 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 * open
 * measure - **UNTESTED**
 * close
+
+### Logic Analyzer
+* open
+* trigger
+* record
+* close
