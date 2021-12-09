@@ -26,3 +26,12 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 ### Waveform Generator
 * generate
 * close
+
+### Power Supplies
+* switch_fixed (for Analog Discovery)
+* switch_variable (for Analog Discovery 2 and Studio)
+* switch_digital (for Digital Discovery and Analog Discovery Pro 3X50)
+* switch_6V (for Analog Discovery Pro 5250)
+* switch_25V (for Analog Discovery Pro 5250)
+* Switch
+* close
