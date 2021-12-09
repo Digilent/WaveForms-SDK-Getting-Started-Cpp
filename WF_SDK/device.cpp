@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-device_data Device::open(string device = "") {
+device_data Device::open(string device) {
     /*
         open a specific device
 

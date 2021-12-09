@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Wavegen::generate(HDWF device_handle, int channel, FUNC function, double offset, double frequency = 1e03, double amplitude = 1, double symmetry = 50, double wait = 0, double run_time = 0, int repeat = 0, double* data = nullptr) {
+void Wavegen::generate(HDWF device_handle, int channel, FUNC function, double offset, double frequency, double amplitude, double symmetry, double wait, double run_time, int repeat, double* data) {
     /*
         generate an analog signal
 

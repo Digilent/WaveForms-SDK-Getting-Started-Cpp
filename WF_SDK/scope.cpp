@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Scope::open(HDWF device_handle, double sampling_frequency = 20e06, int buffer_size = 8192, double offset = 0, double amplitude_range = 5) {
+void Scope::open(HDWF device_handle, double sampling_frequency, int buffer_size, double offset, double amplitude_range) {
     /*
         initialize the oscilloscope
 
@@ -60,7 +60,7 @@ double Scope::measure(HDWF device_handle, int channel) {
 
 /* ----------------------------------------------------- */
 
-void Scope::trigger(HDWF device_handle, bool enable, const TRIGSRC source = trigger_source.none, int channel = 1, double timeout = 0, bool edge_rising = true, double level = 0) {
+void Scope::trigger(HDWF device_handle, bool enable, const TRIGSRC source, int channel, double timeout, bool edge_rising, double level) {
     /*
         set up triggering
 
@@ -110,7 +110,7 @@ void Scope::trigger(HDWF device_handle, bool enable, const TRIGSRC source = trig
 
 /* ----------------------------------------------------- */
 
-scope_data Scope::record(HDWF device_handle, int channel, double sampling_frequency=20e06, int buffer_size=8192) {
+scope_data Scope::record(HDWF device_handle, int channel, double sampling_frequency, int buffer_size) {
     /*
         record an analog signal
 
