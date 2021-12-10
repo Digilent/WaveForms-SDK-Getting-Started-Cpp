@@ -69,7 +69,7 @@ uart_data UART::read(HDWF device_handle) {
     */
     // variable to store results
     uart_data out_data;
-    int rx_data[] = {};
+    unsigned char rx_data[] = {};
 
     // create empty string buffer
     char data[8193];
@@ -86,7 +86,7 @@ uart_data UART::read(HDWF device_handle) {
     // append current data chunks
     int index = 0;
     for (index = 0; index < count; index++) {
-        rx_data[index] = int(data[index]);
+        rx_data[index] = (unsigned char)(data[index]);
     }
 
     // ensure data integrity
@@ -102,7 +102,7 @@ uart_data UART::read(HDWF device_handle) {
 
         // append current data chunks
         for ( ; index < count; index++) {
-            rx_data[index] = int(data[index]);
+            rx_data[index] = (unsigned char)(data[index]);
         }
 
         // check for not acknowledged
@@ -137,7 +137,7 @@ void UART::write(HDWF device_handle, string data) {
 
 /* ----------------------------------------------------- */
 
-void UART::write(HDWF device_handle, int* data) {
+void UART::write(HDWF device_handle, unsigned char* data) {
     /*
         send data through UART
         

@@ -18,7 +18,7 @@ using namespace std;
 /* ----------------------------------------------------- */
 
 struct UART_Data {
-    int* data;
+    unsigned char* data;
     string error;
 };
 
@@ -31,6 +31,6 @@ class UART {
         void open(HDWF device_handle, int rx, int tx, int baud_rate = 9600, bool parity = -1, int data_bits = 8, int stop_bits = 1);
         uart_data read(HDWF device_handle);
         void write(HDWF device_handle, string data);
-        void write(HDWF device_handle, int* data);
+        void write(HDWF device_handle, unsigned char* data);
         void close(HDWF device_handle);
 } uart;
