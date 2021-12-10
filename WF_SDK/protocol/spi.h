@@ -2,6 +2,7 @@
 
 /* include the necessary libraries */
 #include <string>
+#include <string.h>
 
 using namespace std;
 
@@ -17,8 +18,9 @@ using namespace std;
 /* ----------------------------------------------------- */
 
 struct SPI_Data {
-    int* mosi;
-    int* miso;
+    unsigned char* mosi;
+    unsigned char* miso;
+    string error = "";
 };
 
 typedef struct SPI_Data spi_data;
@@ -26,13 +28,16 @@ typedef struct SPI_Data spi_data;
 /* ----------------------------------------------------- */
 
 class SPI {
+    private:
+        int length(unsigned char* array);
+        unsigned char* convert(unsigned long long number);
     public:
         void open(HDWF device_handle, int cs, int sck, int miso = -1, int mosi = -1, double clk_frequency = 1e06, int mode = 0, bool order = true);
-        int* read(HDWF device_handle, int count, int cs);
+        unsigned char* read(HDWF device_handle, int count, int cs);
         void write(HDWF device_handle, string data, int cs);
-        void write(HDWF device_handle, int* data, int cs);
-        int* exchange(HDWF device_handle, string data, int count, int cs);
-        int* exchange(HDWF device_handle, int* data, int count, int cs);
+        void write(HDWF device_handle, unsigned char* data, int cs);
+        unsigned char* exchange(HDWF device_handle, string data, int count, int cs);
+        unsigned char* exchange(HDWF device_handle, unsigned char* data, int count, int cs);
         spi_data spy(HDWF device_handle, int count, int cs, int sck, int mosi = -1, int miso = -1, int word_size = 8);
         void close(HDWF device_handle);
 } spi;
