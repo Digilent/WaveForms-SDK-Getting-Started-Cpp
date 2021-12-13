@@ -3,3 +3,5 @@
 **/matplotlib
 *.json
 *.exe
+*.obj
+*.pdb
