@@ -18,23 +18,23 @@ using namespace std;
 
 class Pattern {
     public:
-        class function {
+        class Function {
             /* function names */
             public:
-                static const DwfDigitalOutType pulse = DwfDigitalOutTypePulse;
-                static const DwfDigitalOutType custom = DwfDigitalOutTypeCustom;
-                static const DwfDigitalOutType random = DwfDigitalOutTypeRandom;
-        };
+                const DwfDigitalOutType pulse = DwfDigitalOutTypePulse;
+                const DwfDigitalOutType custom = DwfDigitalOutTypeCustom;
+                const DwfDigitalOutType random = DwfDigitalOutTypeRandom;
+        } function;
 
-        class trigger_source {
+        class Trigger_Source {
             /* trigger source names */
             public:
-                static const TRIGSRC none = trigsrcNone;
-                static const TRIGSRC analog = trigsrcDetectorAnalogIn;
-                static const TRIGSRC digital = trigsrcDetectorDigitalIn;
-                static constexpr TRIGSRC external[5] = {trigsrcNone, trigsrcExternal1, trigsrcExternal2, trigsrcExternal3, trigsrcExternal4};
-            };
+                const TRIGSRC none = trigsrcNone;
+                const TRIGSRC analog = trigsrcDetectorAnalogIn;
+                const TRIGSRC digital = trigsrcDetectorDigitalIn;
+                const TRIGSRC external[5] = {trigsrcNone, trigsrcExternal1, trigsrcExternal2, trigsrcExternal3, trigsrcExternal4};
+            } trigger_source;
 
-        void generate(HDWF device_handle, int channel, DwfDigitalOutType function, double frequency, double duty_cycle = 50.0, unsigned char* data = nullptr, double wait = 0, int repeat = 0, bool trigger_enabled = false, TRIGSRC trigger_source = trigger_source::none, bool trigger_edge_rising = true);
+        void generate(HDWF device_handle, int channel, DwfDigitalOutType function, double frequency, double duty_cycle = 50.0, unsigned char* data = nullptr, double wait = 0, int repeat = 0, bool trigger_enabled = false, TRIGSRC trigger_source = trigger_source.none, bool trigger_edge_rising = true);
         void close(HDWF device_handle);
 } pattern;
