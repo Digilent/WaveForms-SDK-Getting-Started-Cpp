@@ -138,11 +138,11 @@ scope_data Scope::record(HDWF device_handle, int channel, double sampling_freque
     }
     
     // copy buffer
-    double buffer[buffer_size]; // create an empty buffer
-    FDwfAnalogInStatusData(device_handle, channel - 1, buffer, buffer_size);
+    vector<double> buffer(buffer_size); // create an empty buffer
+    FDwfAnalogInStatusData(device_handle, channel - 1, buffer.data(), buffer_size);
     
     // calculate aquisition time
-    double time[buffer_size];
+    vector<double> time(buffer_size);
     for (int index = 0; index < buffer_size; index++) {
         time[index] = index / sampling_frequency;
     }

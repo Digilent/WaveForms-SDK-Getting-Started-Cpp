@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType function, double frequency, double duty_cycle, unsigned char* data, double wait, int repeat, bool trigger_enabled, TRIGSRC trigger_source, bool trigger_edge_rising) {
+void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType function, double frequency, double duty_cycle, vector<unsigned char> data, double wait, int repeat, bool trigger_enabled, TRIGSRC trigger_source, bool trigger_edge_rising) {
     /*
         generate a logic signal
         
@@ -81,10 +81,9 @@ void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType functi
     // load custom signal data
     else if (function == DwfDigitalOutTypeCustom) {
         // format data
-        int length = sizeof(data) / sizeof(data[0]);
-        int buffer_length = (length + 7) >> 3;
-        unsigned char buffer[buffer_length];
-        for (int index = 0; index < length; index++) {
+        int buffer_length = (data.size() + 7) >> 3;
+        vector<unsigned char> buffer(buffer_length);
+        for (int index = 0; index < data.size(); index++) {
             buffer[index] = 0;
             if (data[index] != 0) {
                 buffer[index >> 3] |= 1 << (index & 7);
@@ -92,7 +91,7 @@ void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType functi
         }
     
         // load data
-        FDwfDigitalOutDataSet(device_handle, channel, &buffer, length);
+        FDwfDigitalOutDataSet(device_handle, channel, buffer.data(), buffer.size());
     }
     
     // start generating the signal

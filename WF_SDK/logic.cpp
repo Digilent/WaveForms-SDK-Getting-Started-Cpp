@@ -110,11 +110,12 @@ logic_data Logic::record(HDWF device_handle, int channel, double sampling_freque
     }
 
     // get samples
-    unsigned short buffer[buffer_size];
-    FDwfDigitalInStatusData(device_handle, buffer, 2 * buffer_size);
+    vector<unsigned short> buffer(buffer_size);
+    FDwfDigitalInStatusData(device_handle, buffer.data(), 2 * buffer_size);
 
     // get channel specific data
-    unsigned char channel_buffer[16][buffer_size];
+    vector<unsigned char> temporal(buffer_size);
+    vector<vector<unsigned char>> channel_buffer(16, temporal);
     for (int index = 0; index < buffer_size; index++) {
         for (int bit = 0; bit < 16; bit++) {
             channel_buffer[bit][index] = buffer[index] & (1 << bit);
@@ -122,7 +123,7 @@ logic_data Logic::record(HDWF device_handle, int channel, double sampling_freque
     }
     
     // calculate aquisition time
-    double time[buffer_size];
+    vector<double> time(buffer_size);
     for (int index = 0; index < buffer_size; index++) {
         time[index] = index / sampling_frequency;
     }

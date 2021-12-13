@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Wavegen::generate(HDWF device_handle, int channel, FUNC function, double offset, double frequency, double amplitude, double symmetry, double wait, double run_time, int repeat, double* data) {
+void Wavegen::generate(HDWF device_handle, int channel, FUNC function, double offset, double frequency, double amplitude, double symmetry, double wait, double run_time, int repeat, vector<double> data) {
     /*
         generate an analog signal
 
@@ -30,7 +30,7 @@ void Wavegen::generate(HDWF device_handle, int channel, FUNC function, double of
     
     // load data if the function type is custom
     if (function == funcCustom) {
-        FDwfAnalogOutNodeDataSet(device_handle, channel, AnalogOutNodeCarrier, data, sizeof(data) / sizeof(data[0]));
+        FDwfAnalogOutNodeDataSet(device_handle, channel, AnalogOutNodeCarrier, data.data(), data.size());
     }
     
     // set frequency

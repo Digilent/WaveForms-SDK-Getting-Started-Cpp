@@ -1,6 +1,9 @@
 /* OSCILLOSCOPE CONTROL FUNCTIONS: open, measure, trigger, record, close */
 
 /* include the necessary libraries */
+#include <vector>
+
+using namespace std;
 
 /* include the constants and the WaveForms function library */
 #ifdef _WIN32
@@ -15,8 +18,8 @@
 
 class scope_data {
     public:
-        double* buffer;
-        double* time;
+        vector<double> buffer;
+        vector<double> time;
         scope_data& operator=(const scope_data&);
 };
 

@@ -156,12 +156,12 @@ bool Supplies::switch_(HDWF device_handle, supplies_data state) {
     */
     if (state.name == "Analog Discovery") {
         // switch fixed supplies on AD
-        if (state.negative_state >= 0 && state.positive_state >= 0) {
+        if (state.negative_state >= bool(0) && state.positive_state >= bool(0)) {
             // both supplies
             switch_fixed(device_handle, state.master_state, state.positive_state, state.negative_state);
             return true;
         }
-        else if (state.state >= 0) {
+        else if (state.state >= bool(0)) {
             // positive supply only
             switch_fixed(device_handle, state.master_state, state.state, false);
             return true;
@@ -174,12 +174,12 @@ bool Supplies::switch_(HDWF device_handle, supplies_data state) {
 
     else if (state.name == "Analog Discovery 2" || state.name == "Analog Discovery Studio") {
         // switch variable supplies on AD2
-        if (state.negative_state >= 0 && state.positive_state >= 0) {
+        if (state.negative_state >= bool(0) && state.positive_state >= bool(0)) {
             // switch both supplies
             switch_variable(device_handle, state.master_state, state.positive_state, state.negative_state, state.positive_voltage, state.negative_voltage);
             return true;
         }
-        else if (state.state >= 0) {
+        else if (state.state >= bool(0)) {
             // switch only the positive supply
             switch_variable(device_handle, state.master_state, state.state, false, state.voltage, 0);
             return true;
@@ -210,11 +210,11 @@ bool Supplies::switch_(HDWF device_handle, supplies_data state) {
 
         // switch the 6V supply on ADP5250
         if (state.master_state == true) {
-            if (state.state >= 0 && state.current >= 0) {
+            if (state.state >= bool(0) && state.current >= 0) {
                 // try to limit the current
                 switch_6V(device_handle, state.state, state.voltage, state.current);
             }
-            else if (state.state >= 0) {
+            else if (state.state >= bool(0)) {
                 // try without current limitation
                 switch_6V(device_handle, state.state, state.voltage);
             }
@@ -223,11 +223,11 @@ bool Supplies::switch_(HDWF device_handle, supplies_data state) {
                 error_flag = true;
             }
 
-            if (state.positive_state >= 0 && state.negative_state >= 0 && state.positive_current >= 0 && state.negative_current <= 0) {
+            if (state.positive_state >= bool(0) && state.negative_state >= bool(0) && state.positive_current >= 0 && state.negative_current <= 0) {
                 // switch both supplies and limit current
                 switch_25V(device_handle, state.positive_state, state.negative_state, state.positive_voltage, state.negative_voltage, state.positive_current, state.negative_current);
             }
-            else if (state.positive_state >= 0 && state.negative_state >= 0) {
+            else if (state.positive_state >= bool(0) && state.negative_state >= bool(0)) {
                 // switch both suplpies without current limitation
                 switch_25V(device_handle, state.positive_state, state.negative_state, state.positive_voltage, state.negative_voltage);
             }

@@ -2,6 +2,7 @@
 
 /* include the necessary libraries */
 #include <algorithm>
+#include <vector>
 
 using namespace std;
 
@@ -18,8 +19,8 @@ using namespace std;
 
 class logic_data {
     public:
-        unsigned char* buffer;
-        double* time;
+        vector<unsigned char> buffer;
+        vector<double> time;
         logic_data& operator=(const logic_data&);
 };
 

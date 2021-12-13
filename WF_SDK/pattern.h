@@ -2,6 +2,7 @@
 
 /* include the necessary libraries */
 #include <math.h>
+#include <vector>
 
 using namespace std;
 
@@ -38,6 +39,6 @@ class Pattern {
     public:
         static Function function;
         static Trigger_Source trigger_source;
-        void generate(HDWF device_handle, int channel, DwfDigitalOutType function, double frequency, double duty_cycle = 50.0, unsigned char* data = nullptr, double wait = 0, int repeat = 0, bool trigger_enabled = false, TRIGSRC trigger_source = trigger_source.none, bool trigger_edge_rising = true);
+        void generate(HDWF device_handle, int channel, DwfDigitalOutType function, double frequency, double duty_cycle = 50.0, vector<unsigned char> data = vector<unsigned char>(), double wait = 0, int repeat = 0, bool trigger_enabled = false, TRIGSRC trigger_source = trigger_source.none, bool trigger_edge_rising = true);
         void close(HDWF device_handle);
 } pattern;
