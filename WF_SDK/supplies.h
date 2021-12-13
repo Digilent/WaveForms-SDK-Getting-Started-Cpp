@@ -7,7 +7,7 @@
 using namespace std;
 
 /* include the constants and the WaveForms function library */
-#ifdef WIN32
+#ifdef _WIN32
 #include "C:/Program Files (x86)/Digilent/WaveFormsSDK/inc/dwf.h"
 #elif __APPLE__
 #include "/Library/Frameworks/dwf.framework/Headers/dwf.h"
@@ -20,9 +20,9 @@ using namespace std;
 struct Supplies_Data {
     string name;
     bool master_state;
-    bool state = -1;
-    bool positive_state = -1;
-    bool negative_state = -1;
+    bool state = bool(-1);
+    bool positive_state = bool(-1);
+    bool negative_state = bool(-1);
     double voltage = -1;
     double positive_voltage = -1;
     double negative_voltage = 1;

@@ -3,7 +3,7 @@
 /* include the necessary libraries */
 
 /* include the constants and the WaveForms function library */
-#ifdef WIN32
+#ifdef _WIN32
 #include "C:/Program Files (x86)/Digilent/WaveFormsSDK/inc/dwf.h"
 #elif __APPLE__
 #include "/Library/Frameworks/dwf.framework/Headers/dwf.h"
@@ -14,7 +14,7 @@
 /* ----------------------------------------------------- */
 
 class Wavegen {
-    public:
+    private:
         class Function {
             /* function names */
             public:
@@ -29,8 +29,10 @@ class Wavegen {
                 const FUNC sine_power = funcSinePower;
                 const FUNC ramp_up = funcRampUp;
                 const FUNC ramp_down = funcRampDown;
-        } function;
+        };
 
+    public:
+        static Function function;
         void generate(HDWF device_handle, int channel, FUNC function, double offset, double frequency = 1e03, double amplitude = 1, double symmetry = 50, double wait = 0, double run_time = 0, int repeat = 0, double* data = nullptr);
         void close(HDWF device_handle);
 } wavegen;
