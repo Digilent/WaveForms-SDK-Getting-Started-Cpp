@@ -69,7 +69,7 @@ uart_data UART::read(HDWF device_handle) {
     */
     // variable to store results
     uart_data out_data;
-    unsigned char rx_data[] = {};
+    vector<unsigned char> rx_data;
 
     // create empty string buffer
     char data[8193];
@@ -127,31 +127,30 @@ void UART::write(HDWF device_handle, string data) {
         parameters: - data of type string
     */
     // encode the string into a C string
-    char buffer[data.size() + 1];
-    strcpy(buffer, data.c_str());
+    vector<char> buffer(data.size() + 1);
+    strcpy(buffer.data(), data.c_str());
 
     // send text, trim zero ending
-    FDwfDigitalUartTx(device_handle, buffer, sizeof(data) / sizeof(data[0]) - 1);
+    FDwfDigitalUartTx(device_handle, buffer.data(), buffer.size() - 1);
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void UART::write(HDWF device_handle, unsigned char* data) {
+void UART::write(HDWF device_handle, vector<unsigned char> data) {
     /*
         send data through UART
         
         parameters: - data of type array of integers
     */
     // encode the array into a C string
-    int length = sizeof(data) / sizeof(data[0]);
-    char buffer[length + 1];
-    for (int index = 0; index < length; index++) {
+    vector<char> buffer(data.size());
+    for (int index = 0; index < data.size(); index++) {
         buffer[index] = char(data[index]);
     } 
 
     // send text, trim zero ending
-    FDwfDigitalUartTx(device_handle, buffer, length - 1);
+    FDwfDigitalUartTx(device_handle, buffer.data(), buffer.size() - 1);
     return;
 }
 

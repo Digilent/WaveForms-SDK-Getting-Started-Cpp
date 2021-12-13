@@ -3,6 +3,7 @@
 /* include the necessary libraries */
 #include <string>
 #include <string.h>
+#include <vector>
 
 using namespace std;
 
@@ -17,29 +18,38 @@ using namespace std;
 
 /* ----------------------------------------------------- */
 
-struct I2C_Data {
-    unsigned char* data;
-    string error;
-    int address;
-    string start;
-    string stop;
-    string direction;
+class i2c_data {
+    public:
+        vector<unsigned char> data;
+        string error;
+        int address;
+        string start;
+        string stop;
+        string direction;
+        i2c_data& operator=(const i2c_data&);
 };
 
-typedef struct I2C_Data i2c_data;
+i2c_data& i2c_data::operator=(const i2c_data &data) {
+    if (this != &data) {
+        error = data.error;
+        address = data.address;
+        start = data.start;
+        stop = data.stop;
+        direction = data.direction;
+    }
+    return *this;
+}
 
 /* ----------------------------------------------------- */
 
 class I2C {
-    private:
-        int length(unsigned char* array);
     public:
         string open(HDWF device_handle, int sda, int scl, double clk_rate = 100e03, bool stretching = true);
         i2c_data read(HDWF device_handle, int count, int address);
         string write(HDWF device_handle, string data, int address);
-        string write(HDWF device_handle, unsigned char* data, int address);
+        string write(HDWF device_handle, vector<unsigned char> data, int address);
         i2c_data exchange(HDWF device_handle, string data, int count, int address);
-        i2c_data exchange(HDWF device_handle, unsigned char* data, int count, int address);
+        i2c_data exchange(HDWF device_handle, vector<unsigned char> data, int count, int address);
         i2c_data spy(HDWF device_handle, int count = 16);
         void close(HDWF device_handle);
 } i2c;

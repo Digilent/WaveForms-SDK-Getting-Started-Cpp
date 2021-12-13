@@ -56,7 +56,7 @@ void SPI::open(HDWF device_handle, int cs, int sck, int miso, int mosi, double c
 
 /* ----------------------------------------------------- */
 
-unsigned char* SPI::read(HDWF device_handle, int count, int cs) {
+vector<unsigned char> SPI::read(HDWF device_handle, int count, int cs) {
     /*
         receives data from SPI
 
@@ -70,10 +70,10 @@ unsigned char* SPI::read(HDWF device_handle, int count, int cs) {
     FDwfDigitalSpiSelect(device_handle, cs, 0);
 
     // create buffer to store data
-    unsigned char buffer[count];
+    vector<unsigned char> buffer(count);
 
     // read array of 8 bit elements
-    FDwfDigitalSpiRead(device_handle, 1, 8, buffer, length(buffer));
+    FDwfDigitalSpiRead(device_handle, 1, 8, buffer.data(), buffer.size());
 
     // disable the chip select line
     FDwfDigitalSpiSelect(device_handle, cs, 1);
@@ -95,15 +95,15 @@ void SPI::write(HDWF device_handle, string data, int cs) {
     FDwfDigitalSpiSelect(device_handle, cs, 0);
 
     // create buffer to write
-    unsigned char buffer[data.size() + 1];
-    char temporal[data.size() + 1];
-    strcpy(temporal, data.c_str());
-    for (int index = 0; index < length(buffer); index++) {
+    vector<unsigned char> buffer(data.size() + 1);
+    vector<char> temporal(data.size() + 1);
+    strcpy(temporal.data(), data.c_str());
+    for (int index = 0; index < buffer.size(); index++) {
         buffer[index] = (unsigned char)(temporal[index]);
     }
 
     // write array of 8 bit elements
-    FDwfDigitalSpiWrite(device_handle, 1, 8, buffer, length(buffer));
+    FDwfDigitalSpiWrite(device_handle, 1, 8, buffer.data(), buffer.size());
 
     // disable the chip select line
     FDwfDigitalSpiSelect(device_handle, cs, 1);
@@ -112,7 +112,7 @@ void SPI::write(HDWF device_handle, string data, int cs) {
 
 /* ----------------------------------------------------- */
 
-void SPI::write(HDWF device_handle, unsigned char* data, int cs) {
+void SPI::write(HDWF device_handle, vector<unsigned char> data, int cs) {
     /*
         send data through SPI
 
@@ -123,14 +123,8 @@ void SPI::write(HDWF device_handle, unsigned char* data, int cs) {
     // enable the chip select line
     FDwfDigitalSpiSelect(device_handle, cs, 0);
 
-    // create buffer to write
-    unsigned char buffer[length(data)];
-    for (int index = 0; index < length(buffer); index++) {
-        buffer[index] = (unsigned char)(data[index]);
-    }
-
     // write array of 8 bit elements
-    FDwfDigitalSpiWrite(device_handle, 1, 8, buffer, length(buffer));
+    FDwfDigitalSpiWrite(device_handle, 1, 8, data.data(), data.size());
 
     // disable the chip select line
     FDwfDigitalSpiSelect(device_handle, cs, 1);
@@ -139,7 +133,7 @@ void SPI::write(HDWF device_handle, unsigned char* data, int cs) {
 
 /* ----------------------------------------------------- */
 
-unsigned char* SPI::exchange(HDWF device_handle, string data, int count, int cs) {
+vector<unsigned char> SPI::exchange(HDWF device_handle, string data, int count, int cs) {
     /*
         sends and receives data using the SPI interface
         
@@ -154,18 +148,18 @@ unsigned char* SPI::exchange(HDWF device_handle, string data, int count, int cs)
     FDwfDigitalSpiSelect(device_handle, cs, 0);
 
     // create buffer to write
-    unsigned char tx_buffer[data.size() + 1];
-    char temporal[data.size() + 1];
-    strcpy(temporal, data.c_str());
-    for (int index = 0; index < length(tx_buffer); index++) {
+    vector<unsigned char> tx_buffer(data.size() + 1);
+    vector<char> temporal(data.size() + 1);
+    strcpy(temporal.data(), data.c_str());
+    for (int index = 0; index < tx_buffer.size(); index++) {
         tx_buffer[index] = (unsigned char)(temporal[index]);
     }
 
     // create buffer to store data
-    unsigned char rx_buffer[count];
+    vector<unsigned char> rx_buffer(count);
 
     // write to MOSI and read from MISO
-    FDwfDigitalSpiWriteRead(device_handle, 1, 8, tx_buffer, length(tx_buffer), rx_buffer, length(rx_buffer));
+    FDwfDigitalSpiWriteRead(device_handle, 1, 8, tx_buffer.data(), tx_buffer.size(), rx_buffer.data(), rx_buffer.size());
 
     // disable the chip select line
     FDwfDigitalSpiSelect(device_handle, cs, 1);
@@ -176,7 +170,7 @@ unsigned char* SPI::exchange(HDWF device_handle, string data, int count, int cs)
 
 /* ----------------------------------------------------- */
 
-unsigned char* SPI::exchange(HDWF device_handle, unsigned char* data, int count, int cs) {
+vector<unsigned char> SPI::exchange(HDWF device_handle, vector<unsigned char> data, int count, int cs) {
     /*
         sends and receives data using the SPI interface
         
@@ -190,17 +184,11 @@ unsigned char* SPI::exchange(HDWF device_handle, unsigned char* data, int count,
     // enable the chip select line
     FDwfDigitalSpiSelect(device_handle, cs, 0);
 
-    // create buffer to write
-    unsigned char tx_buffer[length(data)];
-    for (int index = 0; index < length(tx_buffer); index++) {
-        tx_buffer[index] = (unsigned char)(data[index]);
-    }
-
     // create buffer to store data
-    unsigned char rx_buffer[count];
+    vector<unsigned char> rx_buffer(count);
 
     // write to MOSI and read from MISO
-    FDwfDigitalSpiWriteRead(device_handle, 1, 8, tx_buffer, length(tx_buffer), rx_buffer, length(rx_buffer));
+    FDwfDigitalSpiWriteRead(device_handle, 1, 8, data.data(), data.size(), rx_buffer.data(), rx_buffer.size());
 
     // disable the chip select line
     FDwfDigitalSpiSelect(device_handle, cs, 1);
@@ -272,8 +260,8 @@ spi_data SPI::spy(HDWF device_handle, int count, int cs, int sck, int mosi, int 
     }
     
     // load data from internal buffer
-    unsigned char rx_data[available];
-    FDwfDigitalInStatusData(device_handle, rx_data, available);
+    vector<unsigned char> rx_data(available);
+    FDwfDigitalInStatusData(device_handle, rx_data.data(), available);
 
     // get message
     int bit_count = 0;
@@ -332,17 +320,10 @@ void SPI::close(HDWF device_handle) {
 
 /* ----------------------------------------------------- */
 
-int SPI::length(unsigned char* array) {
-    /* get the length of a byte array */
-    return (sizeof(array) / sizeof(array[0]));
-}
-
-/* ----------------------------------------------------- */
-
-unsigned char* SPI::convert(unsigned long long number) {
+vector<unsigned char> SPI::convert(unsigned long long number) {
     /* convert a number to a byte array */
     int index = 0;
-    unsigned char array[] = {};
+    vector<unsigned char> array;
     if (number == 0) {
         array[0] = 0;
     }

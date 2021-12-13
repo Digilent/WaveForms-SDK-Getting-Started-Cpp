@@ -69,11 +69,11 @@ i2c_data I2C::read(HDWF device_handle, int count, int address) {
                     - error message or empty string
     */
     // create buffer to store data
-    unsigned char buffer[count];
+    vector<unsigned char> buffer(count);
 
     // receive
     int nak = 0;
-    FDwfDigitalI2cRead(device_handle, address << 1, buffer, count, &nak);
+    FDwfDigitalI2cRead(device_handle, address << 1, buffer.data(), count, &nak);
 
     i2c_data data;
     data.data = buffer;
@@ -100,16 +100,16 @@ string I2C::write(HDWF device_handle, string data, int address) {
         returns:    - error message or empty string
     */
     // encode the string into a string buffer
-    unsigned char buffer[data.size() + 1];
-    char temporal[data.size() + 1];
-    strcpy(temporal, data.c_str());
-    for (int index = 0; index < length(buffer); index++) {
+    vector<unsigned char> buffer(data.size() + 1);
+    vector<char> temporal(data.size() + 1);
+    strcpy(temporal.data(), data.c_str());
+    for (int index = 0; index < buffer.size(); index++) {
         buffer[index] = (unsigned char)(temporal[index]);
     }
 
     // send
     int nak = 0;
-    FDwfDigitalI2cWrite(device_handle, address << 1, buffer, length(buffer), &nak);
+    FDwfDigitalI2cWrite(device_handle, address << 1, buffer.data(), buffer.size(), &nak);
 
     // check for not acknowledged
     if (nak != 0) {
@@ -123,7 +123,7 @@ string I2C::write(HDWF device_handle, string data, int address) {
 
 /* ----------------------------------------------------- */
 
-string I2C::write(HDWF device_handle, unsigned char* data, int address) {
+string I2C::write(HDWF device_handle, vector<unsigned char> data, int address) {
     /*
         send data through I2C
         
@@ -133,15 +133,9 @@ string I2C::write(HDWF device_handle, unsigned char* data, int address) {
                     
         returns:    - error message or empty string
     */
-    // encode the string into a string buffer
-    unsigned char buffer[length(data)];
-    for (int index = 0; index < length(buffer); index++) {
-        buffer[index] = (unsigned char)(data[index]);
-    }
-
     // send
     int nak = 0;
-    FDwfDigitalI2cWrite(device_handle, address << 1, buffer, length(buffer), &nak);
+    FDwfDigitalI2cWrite(device_handle, address << 1, data.data(), data.size(), &nak);
 
     // check for not acknowledged
     if (nak != 0) {
@@ -168,19 +162,19 @@ i2c_data I2C::exchange(HDWF device_handle, string data, int count, int address) 
                     - error message or empty string
     */
     // create buffer to store data
-    unsigned char rx_buffer[count];
+    vector<unsigned char> rx_buffer(count);
 
     // encode the string into a string buffer
-    unsigned char tx_buffer[data.size() + 1];
-    char temporal[data.size() + 1];
-    strcpy(temporal, data.c_str());
-    for (int index = 0; index < length(tx_buffer); index++) {
+    vector<unsigned char> tx_buffer(data.size() + 1);
+    vector<char> temporal(data.size() + 1);
+    strcpy(temporal.data(), data.c_str());
+    for (int index = 0; index < tx_buffer.size(); index++) {
         tx_buffer[index] = (unsigned char)(temporal[index]);
     }
 
     // send and receive
     int nak = 0;
-    FDwfDigitalI2cWriteRead(device_handle, address << 1, tx_buffer, length(tx_buffer), rx_buffer, count, &nak);
+    FDwfDigitalI2cWriteRead(device_handle, address << 1, tx_buffer.data(), tx_buffer.size(), rx_buffer.data(), count, &nak);
 
     i2c_data out_data;
     out_data.data = rx_buffer;
@@ -196,7 +190,7 @@ i2c_data I2C::exchange(HDWF device_handle, string data, int count, int address) 
 
 /* ----------------------------------------------------- */
 
-i2c_data I2C::exchange(HDWF device_handle, unsigned char* data, int count, int address) {
+i2c_data I2C::exchange(HDWF device_handle, vector<unsigned char> data, int count, int address) {
     /*
         sends and receives data using the I2C interface
         
@@ -209,17 +203,11 @@ i2c_data I2C::exchange(HDWF device_handle, unsigned char* data, int count, int a
                     - error message or empty string
     */
     // create buffer to store data
-    unsigned char rx_buffer[count];
-
-    // encode the string into a string buffer
-    unsigned char tx_buffer[length(data)];
-    for (int index = 0; index < length(tx_buffer); index++) {
-        tx_buffer[index] = (unsigned char)(data[index]);
-    }
+    vector<unsigned char> rx_buffer(count);
 
     // send and receive
     int nak = 0;
-    FDwfDigitalI2cWriteRead(device_handle, address << 1, tx_buffer, length(tx_buffer), rx_buffer, count, &nak);
+    FDwfDigitalI2cWriteRead(device_handle, address << 1, data.data(), data.size(), rx_buffer.data(), count, &nak);
 
     i2c_data out_data;
     out_data.data = rx_buffer;
@@ -254,9 +242,9 @@ i2c_data I2C::spy(HDWF device_handle, int count) {
     // read data
     int start = 0;
     int stop = 0;
-    unsigned char rx_data[count];
+    vector<unsigned char> rx_data(count);
     int nak = 0;
-    if (FDwfDigitalI2cSpyStatus(device_handle, &start, &stop, rx_data, &count, &nak) == 0) {
+    if (FDwfDigitalI2cSpyStatus(device_handle, &start, &stop, rx_data.data(), &count, &nak) == 0) {
         string error = "Communication with the device failed.";
         data.error = error;
     }
@@ -308,10 +296,4 @@ void I2C::close(HDWF device_handle) {
     */
     FDwfDigitalI2cReset(device_handle);
     return;
-}
-
-/* ----------------------------------------------------- */
-
-int I2C::length(unsigned char* array) {
-    return sizeof(array) / sizeof(array[0]);
 }

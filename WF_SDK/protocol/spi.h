@@ -3,6 +3,7 @@
 /* include the necessary libraries */
 #include <string>
 #include <string.h>
+#include <vector>
 
 using namespace std;
 
@@ -17,27 +18,35 @@ using namespace std;
 
 /* ----------------------------------------------------- */
 
-struct SPI_Data {
-    unsigned char* mosi;
-    unsigned char* miso;
-    string error = "";
+class spi_data {
+    public:
+        vector<unsigned char> mosi;
+        vector<unsigned char> miso;
+        string error = "";
+        spi_data& operator=(const spi_data&);
 };
 
-typedef struct SPI_Data spi_data;
+spi_data& spi_data::operator=(const spi_data &data) {
+    if (this != &data) {
+        mosi = data.mosi;
+        miso = data.miso;
+        error = data.error;
+    }
+    return *this;
+}
 
 /* ----------------------------------------------------- */
 
 class SPI {
     private:
-        int length(unsigned char* array);
-        unsigned char* convert(unsigned long long number);
+        vector<unsigned char> convert(unsigned long long number);
     public:
         void open(HDWF device_handle, int cs, int sck, int miso = -1, int mosi = -1, double clk_frequency = 1e06, int mode = 0, bool order = true);
-        unsigned char* read(HDWF device_handle, int count, int cs);
+        vector<unsigned char> read(HDWF device_handle, int count, int cs);
         void write(HDWF device_handle, string data, int cs);
-        void write(HDWF device_handle, unsigned char* data, int cs);
-        unsigned char* exchange(HDWF device_handle, string data, int count, int cs);
-        unsigned char* exchange(HDWF device_handle, unsigned char* data, int count, int cs);
+        void write(HDWF device_handle, vector<unsigned char> data, int cs);
+        vector<unsigned char> exchange(HDWF device_handle, string data, int count, int cs);
+        vector<unsigned char> exchange(HDWF device_handle, vector<unsigned char> data, int count, int cs);
         spi_data spy(HDWF device_handle, int count, int cs, int sck, int mosi = -1, int miso = -1, int word_size = 8);
         void close(HDWF device_handle);
 } spi;
