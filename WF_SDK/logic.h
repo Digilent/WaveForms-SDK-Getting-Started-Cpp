@@ -16,12 +16,20 @@ using namespace std;
 
 /* ----------------------------------------------------- */
 
-struct Logic_Data {
-    unsigned char* buffer;
-    double* time;
+class logic_data {
+    public:
+        unsigned char* buffer;
+        double* time;
+        logic_data& operator=(const logic_data&);
 };
 
-typedef struct Logic_Data logic_data;
+logic_data& logic_data::operator=(const logic_data &data) {
+    if (this != &data) {
+        buffer = data.buffer;
+        time = data.time;
+    }
+    return *this;
+}
 
 /* ----------------------------------------------------- */
 

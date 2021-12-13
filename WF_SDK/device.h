@@ -19,12 +19,20 @@ using namespace std;
 
 /* ----------------------------------------------------- */
 
-struct Device_Data {
-    HDWF handle;
-    string name;
+class device_data {
+    public:
+        HDWF handle;
+        string name;
+        device_data& operator=(const device_data&);
 };
 
-typedef struct Device_Data device_data;
+device_data& device_data::operator=(const device_data &data) {
+    if (this != &data) {
+        handle = data.handle;
+        name = data.name;
+    }
+    return *this;
+}
 
 /* ----------------------------------------------------- */
 

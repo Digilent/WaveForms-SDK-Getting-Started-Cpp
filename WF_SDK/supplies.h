@@ -17,21 +17,37 @@ using namespace std;
 
 /* ----------------------------------------------------- */
 
-struct Supplies_Data {
-    string name;
-    bool master_state;
-    bool state = bool(-1);
-    bool positive_state = bool(-1);
-    bool negative_state = bool(-1);
-    double voltage = -1;
-    double positive_voltage = -1;
-    double negative_voltage = 1;
-    double current = -1;
-    double positive_current = -1;
-    double negative_current = 1;
+class supplies_data {
+    public:
+        string name;
+        bool master_state;
+        bool state = bool(-1);
+        bool positive_state = bool(-1);
+        bool negative_state = bool(-1);
+        double voltage = -1;
+        double positive_voltage = -1;
+        double negative_voltage = 1;
+        double current = -1;
+        double positive_current = -1;
+        double negative_current = 1;
+        supplies_data& operator=(const supplies_data&);
 };
 
-typedef struct Supplies_Data supplies_data;
+supplies_data& supplies_data::operator=(const supplies_data &data) {
+    if (this != &data) {
+        name = data.name;
+        state = data.state;
+        positive_state = data.positive_state;
+        negative_state = data.negative_state;
+        voltage = data.voltage;
+        positive_voltage = data.positive_voltage;
+        negative_voltage = data.negative_voltage;
+        current = data.current;
+        positive_current = data.positive_current;
+        negative_current = data.negative_current;
+    }
+    return *this;
+}
 
 /* ----------------------------------------------------- */
 

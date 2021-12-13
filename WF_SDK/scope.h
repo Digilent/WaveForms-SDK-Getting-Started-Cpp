@@ -13,16 +13,20 @@
 
 /* ----------------------------------------------------- */
 
-struct Scope_Data {
-    double* buffer;
-    double* time;
+class scope_data {
+    public:
+        double* buffer;
+        double* time;
+        scope_data& operator=(const scope_data&);
 };
 
-typedef struct Scope_Data scope_data;
-
-/* ----------------------------------------------------- */
-
-
+scope_data& scope_data::operator=(const scope_data &data) {
+    if (this != &data) {
+        buffer = data.buffer;
+        time = data.time;
+    }
+    return *this;
+}
 
 /* ----------------------------------------------------- */
 
