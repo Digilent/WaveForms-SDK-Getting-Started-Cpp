@@ -29,7 +29,7 @@ void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType functi
     FDwfDigitalOutCounterInfo(device_handle, 0, 0, &counter_limit);
     
     // calculate the divider for the given signal frequency
-    int divider = 0 - int(-(internal_frequency / frequency) / counter_limit);
+    int divider = int(ceil(internal_frequency / frequency / counter_limit));
     
     // enable the respective channel
     FDwfDigitalOutEnableSet(device_handle, channel, 1);
