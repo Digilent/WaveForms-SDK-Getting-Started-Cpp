@@ -1,5 +1,9 @@
 #include "WF_SDK/WF_SDK.h"  // include all classes and functions
 
+#include <iostream>         // needed for input/output
+
+using namespace std;
+
 /* ----------------------------------------------------- */
 
 void main(void) {
@@ -19,5 +23,8 @@ void main(void) {
 
     // close the connection
     device.close(this_device.handle);
+
+    cout << "\nPress Enter to exit...";
+    cin.get();
     return;
 }

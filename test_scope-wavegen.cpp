@@ -1,8 +1,9 @@
 #include "WF_SDK/WF_SDK.h"  // include all classes and functions
 
-#include "matplotlib/matplotlibcpp.h"   // needed for plotting (https://github.com/lava/matplotlib-cpp)
-#include <vector>
-namespace plt = matplotlibcpp;
+#include <iostream>         // needed for input/output
+#include <fstream>
+
+using namespace std;
 
 /* ----------------------------------------------------- */
 
@@ -31,19 +32,20 @@ void main(void) {
         scope_data recorded_data;
         recorded_data = scope.record(this_device.handle, 1);
 
-        // convert data types
-        std::vector<double> xdata;
-        std::vector<double> ydata;
-        for (int index = 0; index < sizeof(recorded_data.buffer) / sizeof(recorded_data.buffer[0]); index++) {
-            xdata[index] = recorded_data.time[index] * 1e03;
-            ydata[index] = recorded_data.buffer[index];
+        // convert the time base
+        for_each(recorded_data.time.begin(), recorded_data.time.end(), [](double &element){ element *= 1e03; });
+
+        // save data
+        ofstream file;
+        file.open("test_scope-wavegen.csv");
+        file << "time [ms],voltage [V]\n";
+        for (int index = 0; index < recorded_data.buffer.size(); index++) {
+            file << to_string(recorded_data.time[index]) + "," + to_string(recorded_data.buffer[index]) + "\n";
         }
+        file.close();
 
         // plot
-        plt::plot(xdata, ydata);
-        plt::xlabel("time [ms]");
-        plt::ylabel("voltage [V]");
-        plt::show();
+        system("python plotting.py test_scope-wavegen.csv");
 
         // reset the scope
         scope.close(this_device.handle);
@@ -56,5 +58,8 @@ void main(void) {
 
     // close the connection
     device.close(this_device.handle);
+
+    cout << "\nPress Enter to exit...";
+    cin.get();
     return;
 }
