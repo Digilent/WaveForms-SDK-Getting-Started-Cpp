@@ -35,7 +35,7 @@ class Wavegen {
         };
 
     public:
-        static Function function;
+        Function function;
         void generate(HDWF device_handle, int channel, FUNC function, double offset, double frequency = 1e03, double amplitude = 1, double symmetry = 50, double wait = 0, double run_time = 0, int repeat = 0, vector<double> data = vector<double>());
         void close(HDWF device_handle);
 } wavegen;
