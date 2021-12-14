@@ -1,8 +1,7 @@
-**/.vs
 **/.vscode
-**/matplotlib
 *.json
 *.exe
 *.obj
 *.pdb
 *.ilk
+*.csv
