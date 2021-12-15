@@ -36,7 +36,7 @@ void main(void) {
 
     // save data
     ofstream file;
-    file.open("test_scope-wavegen.csv");
+    file.open("test_logic-pattern.csv");
     file << "time [us],logic value\n";
     for (int index = 0; index < recorded_data.buffer.size(); index++) {
         file << to_string(recorded_data.time[index]) + "," + to_string(recorded_data.buffer[index]) + "\n";
@@ -44,7 +44,7 @@ void main(void) {
     file.close();
 
     // plot
-    system("python plotting.py test_scope-wavegen.csv");
+    system("python plotting.py test_logic-pattern.csv");
 
     // reset the logic analyzer
     logic.close(this_device.handle);
