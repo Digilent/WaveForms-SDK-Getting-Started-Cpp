@@ -20,10 +20,10 @@ using namespace std;
 class supplies_data {
     public:
         string name;
-        bool master_state;
-        bool state = bool(-1);
-        bool positive_state = bool(-1);
-        bool negative_state = bool(-1);
+        int master_state;
+        int state = -1;
+        int positive_state = -1;
+        int negative_state = -1;
         double voltage = -1;
         double positive_voltage = -1;
         double negative_voltage = 1;
@@ -53,11 +53,11 @@ supplies_data& supplies_data::operator=(const supplies_data &data) {
 
 class Supplies {
     public:
-        void switch_fixed(HDWF device_handle, bool master_state, bool positive_state, bool negative_state);
-        void switch_variable(HDWF device_handle, bool master_state, bool positive_state, bool negative_state, double positive_voltage, double negative_voltage);
-        void switch_digital(HDWF device_handle, bool master_state, double voltage);
-        void switch_6V(HDWF device_handle, bool master_state, double voltage, double current = 1);
-        void switch_25V(HDWF device_handle, bool positive_state, bool negative_state, double positive_voltage, double negative_voltage, double positive_current = 0.5, double negative_current = -0.5);
+        void switch_fixed(HDWF device_handle, int master_state, int positive_state, int negative_state);
+        void switch_variable(HDWF device_handle, int master_state, int positive_state, int negative_state, double positive_voltage, double negative_voltage);
+        void switch_digital(HDWF device_handle, int master_state, double voltage);
+        void switch_6V(HDWF device_handle, int master_state, double voltage, double current = 1);
+        void switch_25V(HDWF device_handle, int positive_state, int negative_state, double positive_voltage, double negative_voltage, double positive_current = 0.5, double negative_current = -0.5);
         bool switch_(HDWF device_handle, supplies_data state);
         void close(HDWF device_handle);
 } supplies;
