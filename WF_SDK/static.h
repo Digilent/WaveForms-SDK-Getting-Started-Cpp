@@ -1,7 +1,6 @@
 /* STATIC I/O CONTROL FUNCTIONS: set_mode, get_state, set_state, set_current, set_pull, close */
 
 /* include the necessary libraries */
-#include <intrin.h>
 #include <algorithm>
 #include <math.h>
 
@@ -19,6 +18,8 @@ using namespace std;
 /* ----------------------------------------------------- */
 
 class Static {
+    private:
+        unsigned int rotate_left(unsigned int number, unsigned int position, unsigned int size = 16);
     public:
         void set_mode(HDWF device_handle, int channel, bool output);
         bool get_state(HDWF device_handle, int channel);

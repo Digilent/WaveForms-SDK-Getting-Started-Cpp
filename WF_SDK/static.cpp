@@ -19,10 +19,10 @@ void Static::set_mode(HDWF device_handle, int channel, bool output) {
     
     // set bit in mask
     if (output == true) {
-        mask |= (unsigned int)(_rotl16(1, channel));
+        mask |= rotate_left(1, channel);
     }
     else {
-        mask &= (unsigned int)(_rotl16(0xFFFE, channel));
+        mask &= rotate_left(0xFFFE, channel);
     }
     
     // set the pin to output
@@ -73,10 +73,10 @@ void Static::set_state(HDWF device_handle, int channel, bool state) {
     
     // set bit in mask
     if (state == true) {
-        mask |= (unsigned int)(_rotl16(1, channel));
+        mask |= rotate_left(1, channel);
     }
     else {
-        mask &= (unsigned int)(_rotl16(0xFFFE, channel));
+        mask &= rotate_left(0xFFFE, channel);
     }
     
     // set the pin state
@@ -139,10 +139,10 @@ void Static::set_pull(HDWF device_handle, int channel, bool direction) {
     // set bit in mask
     unsigned int mask_ = (unsigned int)(mask);
     if (dir == 0.5) {
-        mask_ |= (unsigned int)(_rotl16(1, channel));
+        mask_ |= rotate_left(1, channel);
     }
     else {
-        mask_ &= (unsigned int)(_rotl16(0xFFFE, channel));
+        mask_ &= rotate_left(0xFFFE, channel);
     }
     
     // set pull enable mask
@@ -157,10 +157,10 @@ void Static::set_pull(HDWF device_handle, int channel, bool direction) {
         // set bit in mask
         unsigned int mask___ = (unsigned int)(mask__);
         if (dir == 1) {
-            mask___ |= (unsigned int)(_rotl16(1, channel));
+            mask___ |= rotate_left(1, channel);
         }
         else {
-            mask___ &= (unsigned int)(_rotl16(0xFFFE, channel));
+            mask___ &= rotate_left(0xFFFE, channel);
         }
         
         // set direction mask
@@ -178,4 +178,10 @@ void Static::close(HDWF device_handle) {
     */
     FDwfDigitalIOReset(device_handle);
     return;
+}
+
+/* ----------------------------------------------------- */
+
+unsigned int Static::rotate_left(unsigned int number, unsigned int position, unsigned int size) {
+    return (number << position) | (number >> (size - position));
 }
