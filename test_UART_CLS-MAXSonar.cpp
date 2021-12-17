@@ -29,7 +29,7 @@ int timeout = 1000; // define timeout iteration count
 
 /* ----------------------------------------------------- */
 
-void main(void) {
+int main(void) {
     // connect to the device
     device_data this_device;
     this_device = device.open();
@@ -111,7 +111,7 @@ void main(void) {
 
     /* ----------------------------------------------------- */
 
-    return;
+    return 0;
 }
 
 /* ----------------------------------------------------- */

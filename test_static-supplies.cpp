@@ -25,7 +25,7 @@ supplies_data supplies_state;
 
 /* ----------------------------------------------------- */
 
-void main(void) {
+int main(void) {
     // connect to the device
     this_device = device.open();
 
@@ -86,7 +86,7 @@ void main(void) {
 
     /* ----------------------------------------------------- */
 
-    return;
+    return 0;
 }
 
 /* ----------------------------------------------------- */

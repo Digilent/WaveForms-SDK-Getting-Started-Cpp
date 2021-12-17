@@ -33,7 +33,7 @@ int mosi = 4;
 
 /* ----------------------------------------------------- */
 
-void main(void) {
+int main(void) {
     // connect to the device
     device_data this_device;
     this_device = device.open();
@@ -85,7 +85,7 @@ void main(void) {
 
     /* ----------------------------------------------------- */
 
-    return;
+    return 0;
 }
 
 /* ----------------------------------------------------- */
