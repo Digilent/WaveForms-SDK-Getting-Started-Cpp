@@ -6,7 +6,13 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 ***
 
 ## Available tests:
-
+* empty test template
+* analog signal generation and recording test
+* digital signal generation and recording test
+* blinking LEDs with the Suplpies and the Static I/O instruments
+* UART in/out test using the Pmod CLS and the Pmod MAXSonar
+* SPI in/out test using the Pmod CLS and the Pmod ALS
+* I2C in/out test using the Pmod CLS and the Pmod TMP2
 
 ***
 
