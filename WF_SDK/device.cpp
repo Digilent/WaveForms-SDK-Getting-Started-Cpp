@@ -22,7 +22,7 @@ device_data Device::open(string device) {
         device_names["Analog Discovery Studio"] = devidDiscovery2;
         device_names["Digital Discovery"] = devidDDiscovery;
         device_names["Analog Discovery Pro 3X50"] = devidADP3X50;
-        device_names["Analog Discovery Pro 5250"] = 8;
+        device_names["Analog Discovery Pro 5250"] = devidADP5250;
 
     // decode device names
     ENUMFILTER device_type = enumfilterAll;
