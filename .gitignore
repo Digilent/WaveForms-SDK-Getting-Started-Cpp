@@ -1,7 +1,10 @@
 **/.vscode
+**/.vs
 *.json
 *.exe
 *.obj
 *.pdb
 *.ilk
 *.csv
+*.log
+*.txt
