@@ -2,7 +2,6 @@
 
 /* include the necessary libraries */
 #include <vector>
-#include <new>
 #include "dwf.h"
 #include "device.h"
 
