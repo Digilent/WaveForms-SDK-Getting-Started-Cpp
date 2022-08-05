@@ -210,7 +210,7 @@ void Device::get_info(Data* device_data) {
             }
         }
         device_data->analog.output.node_type.insert(device_data->analog.output.node_type.end(), templist1);
-        device_data->analog.output.node_count.insert(device_data->analog.output.node_count.end(), device_data->analog.output.node_type.size());
+        device_data->analog.output.node_count.insert(device_data->analog.output.node_count.end(), device_data->analog.output.node_type[channel_index].size());
         // buffer size
         std::vector<int> templist2;
         for (int node_index = 0; node_index < device_data->analog.output.node_count[channel_index]; node_index++) {
