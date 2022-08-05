@@ -2,45 +2,45 @@
 
 #include <iostream>         // needed for input/output
 #include <fstream>
-
-using namespace std;
+#include <vector>
 
 /* ----------------------------------------------------- */
 
 int main(void) {
     // connect to the device
-    device_data this_device;
-    this_device = device.open();
+    Device::Data device_data = device.open();
 
     // check for connection errors
-    device.check_error(this_device.handle);
+    device.check_error(device_data);
 
     /* ----------------------------------------------------- */
 
     // use instruments here
-    if (this_device.name != "Digital Discovery") {
+    if (device_data.name != "Digital Discovery") {
         // initialize the scope with default settings
-        scope.open(this_device.handle);
+        scope.open(device_data);
 
         // set up triggering on scope channel 1
-        scope.trigger(this_device.handle, true, scope.trigger_source.analog, 1, 0);
+        scope.trigger(device_data, true, scope.trigger_source.analog, 1, 0);
 
         // generate a 10KHz sine signal with 2V amplitude on channel 1
-        wavegen.generate(this_device.handle, 1, wavegen.function.sine, 0, 10e03, 2);
+        wavegen.generate(device_data, 1, wavegen.function.sine, 0, 10e03, 2);
 
-        // record data with the scopeon channel 1
-        scope_data recorded_data;
-        recorded_data = scope.record(this_device.handle, 1);
+        // record data with the scope on channel 1
+        std::vector<double> buffer = scope.record(device_data, 1);
 
-        // convert the time base
-        for_each(recorded_data.time.begin(), recorded_data.time.end(), [](double &element){ element *= 1e03; });
-
+        // limit displayed data size
+        int length = buffer.size();
+        if (length > 10000) {
+            length = 10000;
+        }
+        
         // save data
-        ofstream file;
+        std::ofstream file;
         file.open("test_scope-wavegen.csv");
         file << "time [ms],voltage [V]\n";
-        for (int index = 0; index < recorded_data.buffer.size(); index++) {
-            file << to_string(recorded_data.time[index]) + "," + to_string(recorded_data.buffer[index]) + "\n";
+        for (int index = 0; index < length; index++) {
+            file << std::to_string(index * 1e03 / scope.data.sampling_frequency) << "," << std::to_string(buffer[index]) << std::endl;
         }
         file.close();
 
@@ -48,18 +48,15 @@ int main(void) {
         system("python plotting.py test_scope-wavegen.csv");
 
         // reset the scope
-        scope.close(this_device.handle);
+        scope.close(device_data);
 
         // reset the wavegen
-        wavegen.close(this_device.handle);
+        wavegen.close(device_data);
     }
 
     /* ----------------------------------------------------- */
 
     // close the connection
-    device.close(this_device.handle);
-
-    cout << "\nPress Enter to exit...";
-    cin.get();
+    device.close(device_data);
     return 0;
 }
