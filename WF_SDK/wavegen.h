@@ -1,20 +1,12 @@
-/* WAVEFORM GENERATOR CONTROL FUNCTIONS: generate, close */
+/* WAVEFORM GENERATOR CONTROL FUNCTIONS: generate, close, enable, disable */
 
 /* include the necessary libraries */
 #include <vector>
+#include "dwf.h"
+#include "device.h"
 
-using namespace std;
-
-/* include the constants and the WaveForms function library */
-#ifdef _WIN32
-#include "C:/Program Files (x86)/Digilent/WaveFormsSDK/inc/dwf.h"
-#elif __APPLE__
-#include "/Library/Frameworks/dwf.framework/Headers/dwf.h"
-#else
-#include <digilent/waveforms/dwf.h>
-#endif
-
-/* ----------------------------------------------------- */
+#ifndef WF_WAVEGEN
+#define WF_WAVEGEN
 
 class Wavegen {
     private:
@@ -34,8 +26,28 @@ class Wavegen {
                 const FUNC ramp_down = funcRampDown;
         };
 
+        class State {
+            public:
+                bool on = false;
+                bool off = true;
+                std::vector<bool> channel{false, false};
+                State& operator=(const State &data) {
+                    if (this != &data) {
+                        on = data.on;
+                        off = data.off;
+                        channel = data.channel;
+                    }
+                    return *this;
+                }
+        };
+
     public:
         Function function;
-        void generate(HDWF device_handle, int channel, FUNC function, double offset, double frequency = 1e03, double amplitude = 1, double symmetry = 50, double wait = 0, double run_time = 0, int repeat = 0, vector<double> data = vector<double>());
-        void close(HDWF device_handle);
+        State state;
+        void generate(Device::Data device_data, int channel, FUNC function, double offset, double frequency = 1e03, double amplitude = 1, double symmetry = 50, double wait = 0, double run_time = 0, int repeat = 0, std::vector<double> data = std::vector<double>());
+        void close(Device::Data device_data, int channel = 0);
+        void enable(Device::Data device_data, int channel);
+        void disable(Device::Data device_data, int channel);
 } wavegen;
+
+#endif

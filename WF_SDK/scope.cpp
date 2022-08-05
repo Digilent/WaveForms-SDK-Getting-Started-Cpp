@@ -5,62 +5,72 @@
 
 /* ----------------------------------------------------- */
 
-void Scope::open(HDWF device_handle, double sampling_frequency, int buffer_size, double offset, double amplitude_range) {
+void Scope::open(Device::Data device_data, double sampling_frequency, int buffer_size, double offset, double amplitude_range) {
     /*
         initialize the oscilloscope
 
-        parameters: - device handle
+        parameters: - device data
                     - sampling frequency in Hz, default is 20MHz
-                    - buffer size, default is 8192
+                    - buffer size, default is 0 (maximum)
                     - offset voltage in Volts, default is 0V
                     - amplitude range in Volts, default is ±5V
     */
+    // set global variables
+    data.sampling_frequency = sampling_frequency;
+    data.max_buffer_size = device_data.analog.input.max_buffer_size;
     // enable all channels
-    FDwfAnalogInChannelEnableSet(device_handle, 0, true);
+    FDwfAnalogInChannelEnableSet(device_data.handle, 0, true);
     
     // set offset voltage (in Volts)
-    FDwfAnalogInChannelOffsetSet(device_handle, 0, offset);
+    FDwfAnalogInChannelOffsetSet(device_data.handle, 0, offset);
     
     // set range (maximum signal amplitude in Volts)
-    FDwfAnalogInChannelRangeSet(device_handle, 0, amplitude_range);
+    FDwfAnalogInChannelRangeSet(device_data.handle, 0, amplitude_range);
     
     // set the buffer size (data point in a recording)
-    FDwfAnalogInBufferSizeSet(device_handle, buffer_size);
+    if (buffer_size == 0 || buffer_size > data.max_buffer_size) {
+        buffer_size = data.max_buffer_size;
+    }
+    data.buffer_size = buffer_size;
+    FDwfAnalogInBufferSizeSet(device_data.handle, buffer_size);
     
     // set the acquisition frequency (in Hz)
-    FDwfAnalogInFrequencySet(device_handle, sampling_frequency);
+    FDwfAnalogInFrequencySet(device_data.handle, sampling_frequency);
     
     // disable averaging (for more info check the documentation)
-    FDwfAnalogInChannelFilterSet(device_handle, -1, filterDecimate);
+    FDwfAnalogInChannelFilterSet(device_data.handle, -1, filterDecimate);
+    
+    state.on = true;
+    state.off = false;
     return;
 }
 
 /* ----------------------------------------------------- */
 
-double Scope::measure(HDWF device_handle, int channel) {
+double Scope::measure(Device::Data device_data, int channel) {
     /*
         measure a voltage
 
-        parameters: - device handler
+        parameters: - device data
                     - the selected oscilloscope channel (1-2, or 1-4)
         
         returns:    - the measured voltage in Volts
     */
     // set up the instrument
-    FDwfAnalogInConfigure(device_handle, false, false);
+    FDwfAnalogInConfigure(device_data.handle, false, false);
     
     // read data to an internal buffer
-    FDwfAnalogInStatus(device_handle, false, 0);
+    FDwfAnalogInStatus(device_data.handle, false, 0);
     
     // extract data from that buffer
     double voltage = 0; // variable to store the measured voltage
-    FDwfAnalogInStatusSample(device_handle, channel - 1, &voltage);
+    FDwfAnalogInStatusSample(device_data.handle, channel - 1, &voltage);
     return voltage;
 }
 
 /* ----------------------------------------------------- */
 
-void Scope::trigger(HDWF device_handle, bool enable, const TRIGSRC source, int channel, double timeout, bool edge_rising, double level) {
+void Scope::trigger(Device::Data device_data, bool enable, const TRIGSRC source, int channel, double timeout, bool edge_rising, double level) {
     /*
         set up triggering
 
@@ -74,61 +84,60 @@ void Scope::trigger(HDWF device_handle, bool enable, const TRIGSRC source, int c
     */
     if (enable && source != trigsrcNone) {
         // enable/disable auto triggering
-        FDwfAnalogInTriggerAutoTimeoutSet(device_handle, timeout);
+        FDwfAnalogInTriggerAutoTimeoutSet(device_data.handle, timeout);
 
         // set trigger source
-        FDwfAnalogInTriggerSourceSet(device_handle, source);
+        FDwfAnalogInTriggerSourceSet(device_data.handle, source);
 
         // set trigger channel
         if (source == trigsrcDetectorAnalogIn) {
             channel--;  // decrement analog channel index
         }
-        FDwfAnalogInTriggerChannelSet(device_handle, channel);
+        FDwfAnalogInTriggerChannelSet(device_data.handle, channel);
 
         // set trigger type
-        FDwfAnalogInTriggerTypeSet(device_handle, trigtypeEdge);
+        FDwfAnalogInTriggerTypeSet(device_data.handle, trigtypeEdge);
 
         // set trigger level
-        FDwfAnalogInTriggerLevelSet(device_handle, level);
+        FDwfAnalogInTriggerLevelSet(device_data.handle, level);
 
         // set trigger edge
         if (edge_rising) {
             // rising edge
-            FDwfAnalogInTriggerConditionSet(device_handle, trigcondRisingPositive);
+            FDwfAnalogInTriggerConditionSet(device_data.handle, trigcondRisingPositive);
         }
         else {
             // falling edge
-            FDwfAnalogInTriggerConditionSet(device_handle, trigcondFallingNegative);
+            FDwfAnalogInTriggerConditionSet(device_data.handle, trigcondFallingNegative);
         }
+        state.trigger = true;
     }
     else {
         // turn off the trigger
-        FDwfAnalogInTriggerSourceSet(device_handle, trigsrcNone);
+        FDwfAnalogInTriggerSourceSet(device_data.handle, trigsrcNone);
+        state.trigger = false;
     }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-scope_data Scope::record(HDWF device_handle, int channel, double sampling_frequency, int buffer_size) {
+std::vector<double> Scope::record(Device::Data device_data, int channel) {
     /*
         record an analog signal
 
         parameters: - device handle
                     - the selected oscilloscope channel (1-2, or 1-4)
-                    - sampling frequency in Hz, default is 20MHz
-                    - buffer size, default is 8192
 
         returns:    - buffer - a list with the recorded voltages
-                    - time - a list with the time moments for each voltage in seconds (with the same index as "buffer")
     */
     // set up the instrument
-    FDwfAnalogInConfigure(device_handle, false, true);
+    FDwfAnalogInConfigure(device_data.handle, false, true);
     
     // read data to an internal buffer
     while (true) {
         unsigned char status = 0;   // variable to store buffer status
-        FDwfAnalogInStatus(device_handle, true, &status);
+        FDwfAnalogInStatus(device_data.handle, true, &status);
     
         // check internal buffer status
         if (status == DwfStateDone) {
@@ -138,28 +147,20 @@ scope_data Scope::record(HDWF device_handle, int channel, double sampling_freque
     }
     
     // copy buffer
-    vector<double> buffer(buffer_size); // create an empty buffer
-    FDwfAnalogInStatusData(device_handle, channel - 1, buffer.data(), buffer_size);
-    
-    // calculate aquisition time
-    vector<double> time(buffer_size);
-    for (int index = 0; index < buffer_size; index++) {
-        time[index] = index / sampling_frequency;
-    }
-    
-    // return everything
-    scope_data data;
-    data.buffer = buffer;
-    data.time = time;
-    return data;
+    std::vector<double> buffer(data.buffer_size);  // try to create an empty buffer
+    FDwfAnalogInStatusData(device_data.handle, channel - 1, buffer.data(), data.buffer_size);
+    return buffer;
 }
 
 /* ----------------------------------------------------- */
 
-void Scope::close(HDWF device_handle) {
+void Scope::close(Device::Data device_data) {
     /*
         reset the scope
     */
-    FDwfAnalogInReset(device_handle);
+    FDwfAnalogInReset(device_data.handle);
+    state.on = false;
+    state.off = true;
+    state.trigger = false;
     return;
 }
