@@ -7,16 +7,6 @@
 #define DIO_IN 14
 #define DIO_OUT 14
 
-// macros
-#if (defined(_WIN32) || defined(_WIN64))
-#   include <windows.h>
-#   define sleep(time) Sleep((int)(time))
-#else
-#   include <unistd.h>
-#   include <sys/time.h>
-#   define sleep(time) usleep((int)(1000 * time))
-#endif
-
 /* ----------------------------------------------------- */
 
 int main(void) {

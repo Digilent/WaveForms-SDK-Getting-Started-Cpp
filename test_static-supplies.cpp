@@ -3,16 +3,6 @@
 #include <signal.h>         // needed for keyboard interrupt detection
 #include <cmath>            // needed for power function
 
-// macros
-#if (defined(_WIN32) || defined(_WIN64))
-#   include <windows.h>
-#   define sleep(time) Sleep((int)(time))
-#else
-#   include <unistd.h>
-#   include <sys/time.h>
-#   define sleep(time) usleep((int)(1000 * time))
-#endif
-
 // function prototypes
 void signal_handler(int sig_num);
 
