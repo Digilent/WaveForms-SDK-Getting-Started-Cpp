@@ -13,6 +13,8 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 * UART in/out test using the Pmod CLS and the Pmod MAXSonar
 * SPI in/out test using the Pmod CLS and the Pmod ALS
 * I2C in/out test using the Pmod CLS and the Pmod TMP2
+* board temperature test
+* device information logging
 
 ***
 
@@ -21,6 +23,7 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 * open
 * check_error
 * close
+* temperature
 
 ### Oscilloscope
 * open
@@ -32,13 +35,10 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 ### Waveform Generator
 * generate
 * close
+* enable
+* disable
 
 ### Power Supplies
-* switch_fixed (for Analog Discovery)
-* switch_variable (for Analog Discovery 2 and Studio)
-* switch_digital (for Digital Discovery and Analog Discovery Pro 3X50)
-* switch_6V (for Analog Discovery Pro 5250)
-* switch_25V (for Analog Discovery Pro 5250)
 * switch_
 * close
 
@@ -56,6 +56,8 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 ### Pattern Generator
 * generate
 * close
+* enable
+* disable
 
 ### Static I/O
 * set_mode
@@ -76,14 +78,12 @@ Check: [Getting Started with the WaveForms SDK](https://digilent.com/reference/t
 * open
 * read
 * write
-* echange
-* spy
+* exchange
 * close
 
 #### I2C
 * open
 * read
 * write
-* echange
-* spy
+* exchange
 * close
