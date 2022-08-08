@@ -1,28 +1,19 @@
 #include <chrono>           // needed for sleep
+#include <signal.h>         // needed for keyboard interrupt
+#include "dwf.h"
+#include "device.h"         // needed for instrument control
 
-// function prototypes
-long get_time(void);        // get milliseconds
-void sleep(long millis);  //delay milliseconds
+#ifndef WF_TOOLS
+#define WF_TOOLS
 
-/* ----------------------------------------------------- */
+void ISR(int signum);
+int device_handle = 0;
 
-// function definitions
+class Tools {
+    public:
+        int get_time(void);
+        void sleep(int millis);
+        void keyboard_interrupt_reset(Device::Data device_data);
+} tools;
 
-// get milliseconds
-long get_time(void) {
-    auto time = std::chrono::system_clock::now();
-    auto duration = time.time_since_epoch();
-    auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
-    long now = millis.count();
-    return now;
-}
-
-// delay code execution
-void sleep(long millis) {
-    long start = get_time();
-    long current = get_time();
-    while (current - start < millis) {
-        current = get_time();
-    }
-    return;
-}
+#endif
