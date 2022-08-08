@@ -2,6 +2,9 @@
     This module realizes communication with Digilent Test & Measurement devices
 */
 
+#ifndef WF_ALL
+#define WF_ALL
+
 #include "device.cpp"
 #include "scope.cpp"
 #include "wavegen.cpp"
@@ -13,3 +16,7 @@
 #include "protocol/uart.cpp"
 #include "protocol/spi.cpp"
 #include "protocol/i2c.cpp"
+
+#include "tools.cpp"
+
+#endif
