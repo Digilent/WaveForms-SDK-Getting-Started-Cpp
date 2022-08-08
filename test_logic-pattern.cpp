@@ -1,5 +1,4 @@
 #include "WF_SDK/WF_SDK.h"  // include all classes and functions
-
 #include <iostream>         // needed for input/output
 #include <fstream>
 #include <vector>
@@ -29,7 +28,7 @@ int main(void) {
     pattern.generate(device_data, DIO_OUT, pattern.function.pulse, 100e03, 30);
 
     // wait 1 second
-    sleep(1000);
+    tools.sleep(1000);
 
     // record data on selected DIO
     std::vector<unsigned short> buffer = logic.record(device_data, DIO_IN);

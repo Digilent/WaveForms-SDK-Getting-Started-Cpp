@@ -1,20 +1,10 @@
 #include "WF_SDK/WF_SDK.h"  // include all classes and functions
 #include <iostream>         // needed for input/output
-#include <signal.h>         // needed for keyboard interrupt detection
 #include <cmath>            // needed for power function
-
-// function prototypes
-void signal_handler(int sig_num);
-
-// global variables
-Device::Data device_data;
-Supplies::Data supplies_data;
-
-/* ----------------------------------------------------- */
 
 int main(void) {
     // connect to the device
-    device_data = device.open();
+    Device::Data device_data = device.open();
 
     // check for connection errors
     device.check_error(device_data);
@@ -23,6 +13,7 @@ int main(void) {
 
     // use instruments here
     // start the positive supply
+    Supplies::Data supplies_data;
     supplies_data.master_state = true;
     supplies_data.positive_state = true;
     supplies_data.positive_voltage = 3.3;
@@ -33,7 +24,7 @@ int main(void) {
         static_.set_mode(device_data, index, true);
     }
 
-    signal(SIGINT, signal_handler);
+    tools.keyboard_interrupt_reset(device_data);
 
     std::cout << "Press Ctrl+C to exit..." << std::endl;
 
@@ -48,7 +39,7 @@ int main(void) {
                 bool  state = bool(mask & int(pow(2, index)));
                 static_.set_state(device_data, index, !state);
             }
-            sleep(100);  // delay
+            tools.sleep(100);  // delay
             mask <<= 1;  // switch mask
         }
 
@@ -60,26 +51,9 @@ int main(void) {
                 bool state = bool(mask & int(pow(2, index)));
                 static_.set_state(device_data, index, !state);
             }
-            sleep(100);  // delay
+            tools.sleep(100);  // delay
         }
     }
 
     return 0;
-}
-
-/* ----------------------------------------------------- */
-
-void signal_handler(int sig_num) {
-    // stop the static I/O
-    static_.close(device_data);
-
-    // stop and reset the power supplies
-    supplies_data.master_state = false;
-    supplies.switch_(device_data, supplies_data);
-    supplies.close(device_data);
-
-    // close the connection
-    device.close(device_data);
-    exit(0);
-    return;
 }
