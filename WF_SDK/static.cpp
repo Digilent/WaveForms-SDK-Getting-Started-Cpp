@@ -5,17 +5,17 @@
 
 /* ----------------------------------------------------- */
 
-void Static::set_mode(HDWF device_handle, int channel, bool output) {
+void Static::set_mode(Device::Data device_data, int channel, bool output) {
     /*
         set a DIO line as input, or as output
 
-        parameters: - device handle
+        parameters: - device data
                     - selected DIO channel number
                     - True means output, False means input
     */
     // load current state of the output enable buffer
     unsigned int mask = 0;
-    FDwfDigitalIOOutputEnableGet(device_handle, &mask);
+    FDwfDigitalIOOutputEnableGet(device_data.handle, &mask);
     
     // set bit in mask
     if (output == true) {
@@ -26,27 +26,32 @@ void Static::set_mode(HDWF device_handle, int channel, bool output) {
     }
     
     // set the pin to output
-    FDwfDigitalIOOutputEnableSet(device_handle, mask);
+    FDwfDigitalIOOutputEnableSet(device_data.handle, mask);
+    state.input[channel] = !output;
+    state.output[channel] = output;
+    if (!output) {
+        state.state[channel] = bool(-1);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-bool Static::get_state(HDWF device_handle, int channel) {
+bool Static::get_state(Device::Data device_data, int channel) {
     /*
         get the state of a DIO line
 
-        parameters: - device handle
+        parameters: - device data
                     - selected DIO channel number
 
         returns:    - True if the channel is HIGH, or False, if the channel is LOW
     */
     // load internal buffer with current state of the pins
-    FDwfDigitalIOStatus(device_handle);
+    FDwfDigitalIOStatus(device_data.handle);
     
     // get the current state of the pins
     unsigned int data = 0;  // variable for this current state
-    FDwfDigitalIOInputStatus(device_handle, &data);
+    FDwfDigitalIOInputStatus(device_data.handle, &data);
     
     // check the required bit
     if (data & (1 << channel) != 0) {
@@ -59,20 +64,20 @@ bool Static::get_state(HDWF device_handle, int channel) {
 
 /* ----------------------------------------------------- */
 
-void Static::set_state(HDWF device_handle, int channel, bool state) {
+void Static::set_state(Device::Data device_data, int channel, bool value) {
     /*
         set a DIO line as input, or as output
 
-        parameters: - device handle
+        parameters: - device data
                     - selected DIO channel number
                     - True means HIGH, False means LOW
     */
     // load current state of the output state buffer
     unsigned int mask = 0;
-    FDwfDigitalIOOutputGet(device_handle, &mask);
+    FDwfDigitalIOOutputGet(device_data.handle, &mask);
     
     // set bit in mask
-    if (state == true) {
+    if (value == true) {
         mask |= rotate_left(1, channel);
     }
     else {
@@ -80,17 +85,18 @@ void Static::set_state(HDWF device_handle, int channel, bool state) {
     }
     
     // set the pin state
-    FDwfDigitalIOOutputSet(device_handle, mask);
+    FDwfDigitalIOOutputSet(device_data.handle, mask);
+    state.state[channel] = value;
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void Static::set_current(HDWF device_handle, int current) {
+void Static::set_current(Device::Data device_data, int current) {
     /*
         limit the output current of the DIO lines
 
-        parameters: - device handle
+        parameters: - device data
                     - current limit in mA: possible values are 2, 4, 6, 8, 12 and 16mA
     */
     // discard unrecognized current values
@@ -105,36 +111,35 @@ void Static::set_current(HDWF device_handle, int current) {
     }
 
     // set limit  
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 4, double(current));
+    FDwfAnalogIOChannelNodeSet(device_data.handle, 0, 4, double(current));
+    state.current = current;
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void Static::set_pull(HDWF device_handle, int channel, bool direction) {
+void Static::set_pull(Device::Data device_data, int channel, bool direction) {
     /*
         pull a DIO line up, or down
 
-        parameters: - device handle
+        parameters: - device data
                     - selected DIO channel number between 0-15
                     - direction: True means HIGH, False means LOW, None means idle
     */
     
     // encode direction
+    state.pull[channel] = direction;
     double dir = 0.5;
-    if (direction == true) {
+    if (direction == 1) {
         dir = 1.0;
     }
-    else if (direction == false) {
+    else if (direction == 0) {
         dir = 0.0;
-    }
-    else {
-        dir = 0.5;
     }
 
     // get pull enable mask
     double mask = 0;
-    FDwfAnalogIOChannelNodeGet(device_handle, 0, 2, &mask);
+    FDwfAnalogIOChannelNodeGet(device_data.handle, 0, 2, &mask);
 
     // set bit in mask
     unsigned int mask_ = (unsigned int)(mask);
@@ -146,13 +151,13 @@ void Static::set_pull(HDWF device_handle, int channel, bool direction) {
     }
     
     // set pull enable mask
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 2, mask);
+    FDwfAnalogIOChannelNodeSet(device_data.handle, 0, 2, mask_);
     
     // set direction if necessary
     if (dir != 0.5) {
         // get direction mask
         double mask__ = 0;
-        FDwfAnalogIOChannelNodeGet(device_handle, 0, 3, &mask__);
+        FDwfAnalogIOChannelNodeGet(device_data.handle, 0, 3, &mask__);
 
         // set bit in mask
         unsigned int mask___ = (unsigned int)(mask__);
@@ -164,7 +169,7 @@ void Static::set_pull(HDWF device_handle, int channel, bool direction) {
         }
         
         // set direction mask
-        FDwfAnalogIOChannelNodeSet(device_handle, 0, 3, mask___);
+        FDwfAnalogIOChannelNodeSet(device_data.handle, 0, 3, mask___);
     }
 
     return;
@@ -172,11 +177,18 @@ void Static::set_pull(HDWF device_handle, int channel, bool direction) {
 
 /* ----------------------------------------------------- */
 
-void Static::close(HDWF device_handle) {
+void Static::close(Device::Data device_data) {
     /*
         reset the instrument
     */
-    FDwfDigitalIOReset(device_handle);
+    FDwfDigitalIOReset(device_data.handle);
+    state.current = 0;
+    for (int index = 0; index < 16; index++) {
+        state.state[index] = bool(-1);
+        state.input[index] = true;
+        state.output[index] = false;
+        state.pull[index] = bool(-1);
+    }
     return;
 }
 

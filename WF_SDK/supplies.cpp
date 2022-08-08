@@ -1,264 +1,193 @@
-/* POWER SUPPLIES CONTROL FUNCTIONS: switch, switch_fixed, switch_variable, switch_digital, switch_6V, switch_25V, close */
+/* POWER SUPPLIES CONTROL FUNCTIONS: switch_, close */
 
 /* include the header */
 #include "supplies.h"
 
 /* ----------------------------------------------------- */
 
-void Supplies::switch_fixed(HDWF device_handle, int master_state, int positive_state, int negative_state) {
+void Supplies::switch_(Device::Data device_data, Data supplies_data) {
     /*
         turn the power supplies on/off
 
-        parameters: - device handle
-                    - master switch - true = on, false = off
-                    - positive supply switch - true = on, false = off
-                    - negative supply switch - true = on, false = off
-    */
-    // enable/disable the positive supply
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 0, int(positive_state));
-    
-    // enable the negative supply
-    FDwfAnalogIOChannelNodeSet(device_handle, 1, 0, int(negative_state));
-    
-    // start/stop the supplies - master switch
-    FDwfAnalogIOEnableSet(device_handle, int(master_state));
-    return;
-}
-
-/* ----------------------------------------------------- */
-
-void Supplies::switch_variable(HDWF device_handle, int master_state, int positive_state, int negative_state, double positive_voltage, double negative_voltage) {
-    /*
-        turn the power supplies on/off
-
-        parameters: - device handle
-                    - master switch - true = on, false = off
-                    - positive supply switch - true = on, false = off
-                    - negative supply switch - true = on, false = off
-                    - positive supply voltage in Volts
-                    - negative supply voltage in Volts
-    */
-    // set positive voltage
-    positive_voltage = max(0.0, min(5.0, positive_voltage));
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 1, positive_voltage);
-    
-    // set negative voltage
-    negative_voltage *= -1;
-    FDwfAnalogIOChannelNodeSet(device_handle, 1, 1, negative_voltage);
-
-    // enable/disable the positive supply
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 0, int(positive_state));
-    
-    // enable the negative supply
-    FDwfAnalogIOChannelNodeSet(device_handle, 1, 0, int(negative_state));
-    
-    // start/stop the supplies - master switch
-    FDwfAnalogIOEnableSet(device_handle, int(master_state));
-    return;
-}
-
-/* ----------------------------------------------------- */
-
-void Supplies::switch_digital(HDWF device_handle, int master_state, double voltage) {
-    /*
-        turn the power supplies on/off
-
-        parameters: - device handle
-                    - master switch - true = on, false = off
-                    - supply voltage in Volts
-    */
-    // set supply voltage
-    voltage = max(1.2, min(3.3, voltage));
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 0, voltage);
-    
-    // start/stop the supplies - master switch
-    FDwfAnalogIOEnableSet(device_handle, int(master_state));
-    return;
-}
-
-/* ----------------------------------------------------- */
-
-void Supplies::switch_6V(HDWF device_handle, int master_state, double voltage, double current) {
-    /*
-        turn the 6V supply on the ADP5250 on/off
-
-        parameters: - master switch - true = on, false = off
-                    - voltage in volts between 0-6
-                    - current in amperes between 0-1
-    */
-    // set the voltage
-    voltage = max(0.0, min(6.0, voltage));
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 1, voltage);
-    
-    // set the current
-    current = max(0.0, min(1.0, current));
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 2, current);
-    
-    // start/stop the supply - master switch
-    FDwfAnalogIOChannelNodeSet(device_handle, 0, 0, double(master_state));
-    FDwfAnalogIOEnableSet(device_handle, int(master_state));
-    return;
-}
-
-/* ----------------------------------------------------- */
-
-void Supplies::switch_25V(HDWF device_handle, int positive_state, int negative_state, double positive_voltage, double negative_voltage, double positive_current, double negative_current) {
-    /*
-        turn the 25V power supplies on/off on the ADP5250
-
-        parameters: - positive supply switch - true = on, false = off
-                    - negative supply switch - true = on, false = off
-                    - positive supply voltage in Volts
-                    - negative supply voltage in Volts
-                    - positive supply current limit
-                    - negative supply current limit
-    */
-    // set positive voltage
-    positive_voltage = max(0.0, min(25.0, positive_voltage));
-    FDwfAnalogIOChannelNodeSet(device_handle, 1, 1, positive_voltage);
-    
-    // set negative voltage
-    negative_voltage *= -1;
-    FDwfAnalogIOChannelNodeSet(device_handle, 2, 1, negative_voltage);
-
-    // set positive current limit
-    positive_current = max(0.0, min(0.5, positive_current));
-    FDwfAnalogIOChannelNodeSet(device_handle, 1, 2, positive_current);
-    
-    // set negative current limit
-    negative_current *= -1;
-    FDwfAnalogIOChannelNodeSet(device_handle, 2, 2, negative_current);
-
-    // enable/disable the supplies
-    FDwfAnalogIOChannelNodeSet(device_handle, 1, 0, double(positive_state));
-    FDwfAnalogIOChannelNodeSet(device_handle, 2, 0, double(negative_state));
-    
-    // master switch
-    FDwfAnalogIOEnableSet(device_handle, int(positive_state | negative_state));
-    return;
-}
-
-/* ----------------------------------------------------- */
-
-bool Supplies::switch_(HDWF device_handle, supplies_data state) {
-    /*
-        turn the power supplies on/off
-
-        parameters: - device handle
+        parameters: - device data
                     - class containing supplies data:
-                        - device_name
                         - master_state
                         - state and/or positive_state and negative_state
                         - voltage and/or positive_voltage and negative_voltage
                         - current and/or positive_current and negative_current
-
-        returns:    - true on success, false on error
     */
-    if (state.name == "Analog Discovery") {
-        // switch fixed supplies on AD
-        if (state.negative_state >= 0 && state.positive_state >= 0) {
-            // both supplies
-            switch_fixed(device_handle, state.master_state, state.positive_state, state.negative_state);
-            return true;
+    
+    //find the positive supply
+    int channel = -1;
+    for (int channel_index = 0; channel_index < device_data.analog.IO.channel_count; channel_index++) {
+        if (device_data.analog.IO.channel_label[channel_index] == std::string("V+") || device_data.analog.IO.channel_label[channel_index] == std::string("p25V")) {
+            channel = channel_index;
+            break;
         }
-        else if (state.state >= 0) {
-            // positive supply only
-            switch_fixed(device_handle, state.master_state, state.state, false);
-            return true;
+    }
+    if (channel != -1) {
+        // find and set enable node
+        int node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Enable")) {
+                node = node_index;
+                break;
+            }
         }
-        else {
-            // error in input data
-            return false;
+        if (node != -1) {
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, supplies_data.positive_state);
+        }
+        // find and set voltage node
+        node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Voltage")) {
+                node = node_index;
+                break;
+            }
+        }
+        if (node != -1) {
+            double voltage = min(max(supplies_data.positive_voltage, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node]);
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, voltage);
+        }
+        // find and set current node
+        node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Current")) {
+                node = node_index;
+                break;
+            }
+        }
+        if (node != -1) {
+            double current = min(max(supplies_data.positive_current, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node]);
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, current);
         }
     }
 
-    else if (state.name == "Analog Discovery 2" || state.name == "Analog Discovery Studio") {
-        // switch variable supplies on AD2
-        if (state.negative_state >= 0 && state.positive_state >= 0) {
-            // switch both supplies
-            cout << "AD2";
-            switch_variable(device_handle, state.master_state, state.positive_state, state.negative_state, state.positive_voltage, state.negative_voltage);
-            return true;
+    //find the negative supply
+    channel = -1;
+    for (int channel_index = 0; channel_index < device_data.analog.IO.channel_count; channel_index++) {
+        if (device_data.analog.IO.channel_label[channel_index] == std::string("V-") || device_data.analog.IO.channel_label[channel_index] == std::string("n25V")) {
+            channel = channel_index;
+            break;
         }
-        else if (state.state >= 0) {
-            // switch only the positive supply
-            switch_variable(device_handle, state.master_state, state.state, false, state.voltage, 0);
-            return true;
+    }
+    if (channel != -1) {
+        // find and set enable node
+        int node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Enable")) {
+                node = node_index;
+                break;
+            }
         }
-        else {
-            // error in input data
-            return false;
+        if (node != -1) {
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, supplies_data.negative_state);
+        }
+        // find and set voltage node
+        node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Voltage")) {
+                node = node_index;
+                break;
+            }
+        }
+        if (node != -1) {
+            double voltage = min(max(supplies_data.negative_voltage, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node]);
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, voltage);
+        }
+        // find and set current node
+        node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Current")) {
+                node = node_index;
+                break;
+            }
+        }
+        if (node != -1) {
+            double current = min(max(supplies_data.negative_current, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node]);
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, current);
         }
     }
 
-    else if (state.name == "Digital Discovery" || state.name == "Analog Discovery Pro 3X50") {
-        // switch the digital supply on DD, or ADP3x50
-        if (state.master_state > 0) {
-            switch_digital(device_handle, state.state, state.voltage);
-            return true;
+    //find the digital/6V supply
+    channel = -1;
+    for (int channel_index = 0; channel_index < device_data.analog.IO.channel_count; channel_index++) {
+        if (device_data.analog.IO.channel_label[channel_index] == std::string("VDD") || device_data.analog.IO.channel_label[channel_index] == std::string("p6V")) {
+            channel = channel_index;
+            break;
         }
-        else if (state.master_state == 0) {
-            switch_digital(device_handle, false, 3.3);
-            return true;
+    }
+    if (channel != -1) {
+        // find and set enable node
+        int node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Enable")) {
+                node = node_index;
+                break;
+            }
         }
-        else {
-            return false;
+        if (node != -1) {
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, supplies_data.state);
+        }
+        // find and set voltage node
+        node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Voltage")) {
+                node = node_index;
+                break;
+            }
+        }
+        if (node != -1) {
+            double voltage = min(max(supplies_data.voltage, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node]);
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, voltage);
+        }
+        // find and set current node
+        node = -1;
+        for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
+            if (device_data.analog.IO.node_name[channel][node_index] == std::string("Current")) {
+                node = node_index;
+                break;
+            }
+        }
+        if (node != -1) {
+            double current = min(max(supplies_data.current, device_data.analog.IO.min_set_range[channel][node]), device_data.analog.IO.max_set_range[channel][node]);
+            FDwfAnalogIOChannelNodeSet(device_data.handle, channel, node, current);
         }
     }
 
-    else if (state.name == "Analog Discovery Pro 5250") {
-        bool error_flag = false;
-
-        // switch the 6V supply on ADP5250
-        if (state.master_state > 0) {
-            if (state.state >= 0 && state.current >= 0) {
-                // try to limit the current
-                switch_6V(device_handle, state.state, state.voltage, state.current);
-            }
-            else if (state.state >= 0) {
-                // try without current limitation
-                switch_6V(device_handle, state.state, state.voltage);
-            }
-            else {
-                // no data for the 6V supply
-                error_flag = true;
-            }
-
-            if (state.positive_state >= 0 && state.negative_state >= 0 && state.positive_current >= 0 && state.negative_current <= 0) {
-                // switch both supplies and limit current
-                switch_25V(device_handle, state.positive_state, state.negative_state, state.positive_voltage, state.negative_voltage, state.positive_current, state.negative_current);
-            }
-            else if (state.positive_state >= 0 && state.negative_state >= 0) {
-                // switch both suplpies without current limitation
-                switch_25V(device_handle, state.positive_state, state.negative_state, state.positive_voltage, state.negative_voltage);
-            }
-            else if (error_flag == false) {
-                // data only for the 6V supply
-                return true;
-            }
-            else if (error_flag == true) {
-                // invalid input data
-                return false;
-            }
-        }
-        else if (state.master_state == 0) {
-            // turn everything off
-            switch_6V(device_handle, false, 0, 1);
-            switch_25V(device_handle, false, false, 0, 0, 0.5, -0.5);
-            return true;
-        }
-    }
-
-    // no such device
-    return false;
+    // turn all supplies on/off
+    FDwfAnalogIOEnableSet(device_data.handle, supplies_data.master_state);
+    state.on = supplies_data.master_state;
+    state.off = !supplies_data.master_state;
+    return;
 }
 
 /* ----------------------------------------------------- */
 
-void Supplies::close(HDWF device_handle) {
+void Supplies::close(Device::Data device_data) {
     /*
         reset the supplies
     */
-    FDwfAnalogIOReset(device_handle);
+    FDwfAnalogIOReset(device_data.handle);
+    state.on = false;
+    state.off = true;
     return;
+}
+
+/* ----------------------------------------------------- */
+
+double Supplies::min(double a, double b) {
+    if (a > b) {
+        return b;
+    }
+    return a;
+}
+
+/* ----------------------------------------------------- */
+
+double Supplies::max(double a, double b) {
+    if (a < b) {
+        return b;
+    }
+    return a;
 }

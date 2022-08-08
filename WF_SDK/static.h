@@ -3,28 +3,43 @@
 /* include the necessary libraries */
 #include <algorithm>
 #include <math.h>
+#include "dwf.h"
+#include "device.h"
 
-using namespace std;
-
-/* include the constants and the WaveForms function library */
-#ifdef _WIN32
-#include "C:/Program Files (x86)/Digilent/WaveFormsSDK/inc/dwf.h"
-#elif __APPLE__
-#include "/Library/Frameworks/dwf.framework/Headers/dwf.h"
-#else
-#include <digilent/waveforms/dwf.h>
-#endif
-
-/* ----------------------------------------------------- */
+#ifndef WF_STATIC
+#define WF_STATIC
 
 class Static {
     private:
         unsigned int rotate_left(unsigned int number, unsigned int position, unsigned int size = 16);
+        class State {
+            public:
+                bool state[16];
+                bool input[16];
+                bool output[16];
+                bool pull[16];
+                int current = 0;
+                State& operator=(const State &data) {
+                    if (this != &data) {
+                        current = data.current;
+                        for (int index = 0; index < 16; index++) {
+                            state[index] = data.state[index];
+                            input[index] = data.input[index];
+                            output[index] = data.output[index];
+                            pull[index] = data.pull[index];
+                        }
+                    }
+                    return *this;
+                }
+        };
     public:
-        void set_mode(HDWF device_handle, int channel, bool output);
-        bool get_state(HDWF device_handle, int channel);
-        void set_state(HDWF device_handle, int channel, bool state);
-        void set_current(HDWF device_handle, int current);
-        void set_pull(HDWF device_handle, int channel, bool direction = bool(-1));
-        void close(HDWF device_handle);
+        State state;
+        void set_mode(Device::Data device_data, int channel, bool output);
+        bool get_state(Device::Data device_data, int channel);
+        void set_state(Device::Data device_data, int channel, bool value);
+        void set_current(Device::Data device_data, int current);
+        void set_pull(Device::Data device_data, int channel, bool direction = bool(-1));
+        void close(Device::Data device_data);
 } static_;
+
+#endif
