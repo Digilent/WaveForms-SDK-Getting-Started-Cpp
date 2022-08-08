@@ -2,44 +2,60 @@
 
 #include <iostream>         // needed for input/output
 #include <fstream>
+#include <vector>
 
-using namespace std;
+#define DIO_IN 14
+#define DIO_OUT 14
+
+// macros
+#if (defined(_WIN32) || defined(_WIN64))
+#   include <windows.h>
+#   define sleep(time) Sleep((int)(time))
+#else
+#   include <unistd.h>
+#   include <sys/time.h>
+#   define sleep(time) usleep((int)(1000 * time))
+#endif
 
 /* ----------------------------------------------------- */
 
 int main(void) {
     // connect to the device
-    device_data this_device;
-    this_device = device.open();
+    Device::Data device_data = device.open();
 
     // check for connection errors
-    device.check_error(this_device.handle);
+    device.check_error(device_data);
 
     /* ----------------------------------------------------- */
 
     // use instruments here
     // initialize the logic analyzer with default settings
-    logic.open(this_device.handle);
+    logic.open(device_data);
 
-    // set up triggering on DIO channel 0
-    logic.trigger(this_device.handle, true, 0, 4096, 0, 0, false);
+    // set up triggering on selected DIO
+    logic.trigger(device_data, true, DIO_IN, 0, 0, false);
 
-    // generate a 100KHz PWM signal with 30% duty cycle on DIO0
-    pattern.generate(this_device.handle, 0, pattern.function.pulse, 100e03, 30);
+    // generate a 100KHz PWM signal with 30% duty cycle on selected DIO
+    pattern.generate(device_data, DIO_OUT, pattern.function.pulse, 100e03, 30);
 
-    // record data on DIO 0
-    logic_data recorded_data;
-    recorded_data = logic.record(this_device.handle, 0);
+    // wait 1 second
+    sleep(1000);
 
-    // convert the time base
-    for_each(recorded_data.time.begin(), recorded_data.time.end(), [](double &element){ element *= 1e06; });
+    // record data on selected DIO
+    std::vector<unsigned short> buffer = logic.record(device_data, DIO_IN);
+
+    // limit displayed data size
+    int length = buffer.size();
+    if (length > 10000) {
+        length = 10000;
+    }
 
     // save data
-    ofstream file;
+    std::ofstream file;
     file.open("test_logic-pattern.csv");
     file << "time [us],logic value\n";
-    for (int index = 0; index < recorded_data.buffer.size(); index++) {
-        file << to_string(recorded_data.time[index]) + "," + to_string(recorded_data.buffer[index]) + "\n";
+    for (int index = 0; index < length; index++) {
+        file << std::to_string(index * 1e06 / logic.data.sampling_frequency) << "," << std::to_string(buffer[index]) << std::endl;
     }
     file.close();
 
@@ -47,17 +63,14 @@ int main(void) {
     system("python plotting.py test_logic-pattern.csv");
 
     // reset the logic analyzer
-    logic.close(this_device.handle);
+    logic.close(device_data);
 
     // reset the pattern generator
-    pattern.close(this_device.handle);
+    pattern.close(device_data);
 
     /* ----------------------------------------------------- */
 
     // close the connection
-    device.close(this_device.handle);
-
-    cout << "\nPress Enter to exit...";
-    cin.get();
+    device.close(device_data);
     return 0;
 }
