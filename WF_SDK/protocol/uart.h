@@ -2,44 +2,36 @@
 
 /* include the necessary libraries */
 #include <string>
-#include <string.h>
 #include <vector>
+#include "dwf.h"
+#include "../device.h"
 
-using namespace std;
-
-/* include the constants and the WaveForms function library */
-#ifdef _WIN32
-#include "C:/Program Files (x86)/Digilent/WaveFormsSDK/inc/dwf.h"
-#elif __APPLE__
-#include "/Library/Frameworks/dwf.framework/Headers/dwf.h"
-#else
-#include <digilent/waveforms/dwf.h>
-#endif
-
-/* ----------------------------------------------------- */
-
-class uart_data {
-    public:
-        vector<unsigned char> data;
-        string error;
-        uart_data& operator=(const uart_data&);
-};
-
-uart_data& uart_data::operator=(const uart_data &data_struct) {
-    if (this != &data_struct) {
-        data = data_struct.data;
-        error = data_struct.error;
-    }
-    return *this;
-}
-
-/* ----------------------------------------------------- */
+#ifndef WF_PROTOCOL_UART
+#define WF_PROTOCOL_UART
 
 class UART {
+    private:
+        class State {
+            public:
+                bool on = false;
+                bool off = true;
+                double baud_rate = 0;
+                State& operator=(const State &data) {
+                    if (this != &data) {
+                        on = data.on;
+                        off = data.off;
+                        baud_rate = data.baud_rate;
+                    }
+                    return *this;
+                }
+        };
     public:
-        void open(HDWF device_handle, int rx, int tx, int baud_rate = 9600, bool parity = bool(-1), int data_bits = 8, int stop_bits = 1);
-        uart_data read(HDWF device_handle);
-        void write(HDWF device_handle, string data);
-        void write(HDWF device_handle, vector<unsigned char> data);
-        void close(HDWF device_handle);
+        State state;
+        void open(Device::Data device_data, int rx, int tx, int baud_rate = 9600, bool parity = bool(-1), int data_bits = 8, int stop_bits = 1);
+        std::vector<unsigned char> read(Device::Data device_data, std::string *error=NULL);
+        void write(Device::Data device_data, std::string data);
+        void write(Device::Data device_data, std::vector<unsigned char> data);
+        void close(Device::Data device_data);
 } uart;
+
+#endif

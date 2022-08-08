@@ -1,15 +1,15 @@
-/* PROTOCOL: SPI CONTROL FUNCTIONS: open, read, write, exchange, spy, close */
+/* PROTOCOL: SPI CONTROL FUNCTIONS: open, read, write, exchange, close */
 
 /* include the header */
 #include "spi.h"
 
 /* ----------------------------------------------------- */
 
-void SPI::open(HDWF device_handle, int cs, int sck, int miso, int mosi, double clk_frequency, int mode, bool order) {
+void SPI::open(Device::Data device_data, int cs, int sck, int miso, int mosi, double clk_frequency, int mode, bool order) {
     /*
         initializes SPI communication
 
-        parameters: - device handle
+        parameters: - device data
                     - cs (DIO line used for chip select)
                     - sck (DIO line used for serial clock)
                     - miso (DIO line used for master in - slave out, optional)
@@ -19,44 +19,49 @@ void SPI::open(HDWF device_handle, int cs, int sck, int miso, int mosi, double c
                     - order (endianness, True means MSB first - default, False means LSB first)
     */
     // set the clock frequency
-    FDwfDigitalSpiFrequencySet(device_handle, clk_frequency);
+    FDwfDigitalSpiFrequencySet(device_data.handle, clk_frequency);
 
     // set the clock pin
-    FDwfDigitalSpiClockSet(device_handle, sck);
+    FDwfDigitalSpiClockSet(device_data.handle, sck);
 
     if (mosi != -1) {
         // set the mosi pin
-        FDwfDigitalSpiDataSet(device_handle, 0, mosi);
+        FDwfDigitalSpiDataSet(device_data.handle, 0, mosi);
 
         // set the initial state
-        FDwfDigitalSpiIdleSet(device_handle, 0, DwfDigitalOutIdleZet);
+        FDwfDigitalSpiIdleSet(device_data.handle, 0, DwfDigitalOutIdleZet);
     }
 
     if (miso != -1) {
         // set the miso pin
-        FDwfDigitalSpiDataSet(device_handle, 1, miso);
+        FDwfDigitalSpiDataSet(device_data.handle, 1, miso);
 
         // set the initial state
-        FDwfDigitalSpiIdleSet(device_handle, 1, DwfDigitalOutIdleZet);
+        FDwfDigitalSpiIdleSet(device_data.handle, 1, DwfDigitalOutIdleZet);
     }
 
     // set the SPI mode
-    FDwfDigitalSpiModeSet(device_handle, mode);
+    FDwfDigitalSpiModeSet(device_data.handle, mode);
 
     // set endianness
-    FDwfDigitalSpiOrderSet(device_handle, int(order));
+    FDwfDigitalSpiOrderSet(device_data.handle, int(order));
 
     // set the cs pin HIGH
-    FDwfDigitalSpiSelect(device_handle, cs, 1);
+    FDwfDigitalSpiSelect(device_data.handle, cs, 1);
 
     // dummy write
-    FDwfDigitalSpiWriteOne(device_handle, 1, 0, 0);
+    FDwfDigitalSpiWriteOne(device_data.handle, 1, 0, 0);
+    state.on = true;
+    state.off = false;
+    state.frequency = clk_frequency;
+    state.order = order;
+    state.mode = mode;
     return;
 }
 
 /* ----------------------------------------------------- */
 
-vector<unsigned char> SPI::read(HDWF device_handle, int count, int cs) {
+std::vector<unsigned char> SPI::read(Device::Data device_data, int count, int cs) {
     /*
         receives data from SPI
 
@@ -67,23 +72,23 @@ vector<unsigned char> SPI::read(HDWF device_handle, int count, int cs) {
         return:     - integer list containing the received bytes
     */
     // enable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 0);
+    FDwfDigitalSpiSelect(device_data.handle, cs, 0);
 
     // create buffer to store data
-    vector<unsigned char> buffer(count);
+    std::vector<unsigned char> buffer(count);
 
     // read array of 8 bit elements
-    FDwfDigitalSpiRead(device_handle, 1, 8, buffer.data(), buffer.size());
+    FDwfDigitalSpiRead(device_data.handle, 1, 8, buffer.data(), buffer.size());
 
     // disable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 1);
+    FDwfDigitalSpiSelect(device_data.handle, cs, 1);
 
     return buffer;
 }
 
 /* ----------------------------------------------------- */
 
-void SPI::write(HDWF device_handle, string data, int cs) {
+void SPI::write(Device::Data device_data, std::string data, int cs) {
     /*
         send data through SPI
 
@@ -91,28 +96,18 @@ void SPI::write(HDWF device_handle, string data, int cs) {
                     - data of type string
                     - chip select line number
     */
-    // enable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 0);
-
     // create buffer to write
-    vector<unsigned char> buffer(data.size() + 1);
-    vector<char> temporal(data.size() + 1);
-    strcpy(temporal.data(), data.c_str());
+    std::vector<unsigned char> buffer(data.size() + 1);
     for (int index = 0; index < buffer.size(); index++) {
-        buffer[index] = (unsigned char)(temporal[index]);
+        buffer[index] = (unsigned char)(data[index]);
     }
-
-    // write array of 8 bit elements
-    FDwfDigitalSpiWrite(device_handle, 1, 8, buffer.data(), buffer.size());
-
-    // disable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 1);
+    write(device_data, buffer, cs);
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void SPI::write(HDWF device_handle, vector<unsigned char> data, int cs) {
+void SPI::write(Device::Data device_data, std::vector<unsigned char> data, int cs) {
     /*
         send data through SPI
 
@@ -121,19 +116,19 @@ void SPI::write(HDWF device_handle, vector<unsigned char> data, int cs) {
                     - chip select line number
     */
     // enable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 0);
+    FDwfDigitalSpiSelect(device_data.handle, cs, 0);
 
     // write array of 8 bit elements
-    FDwfDigitalSpiWrite(device_handle, 1, 8, data.data(), data.size());
+    FDwfDigitalSpiWrite(device_data.handle, 1, 8, data.data(), data.size());
 
     // disable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 1);
+    FDwfDigitalSpiSelect(device_data.handle, cs, 1);
     return;
 }
 
 /* ----------------------------------------------------- */
 
-vector<unsigned char> SPI::exchange(HDWF device_handle, string data, int count, int cs) {
+std::vector<unsigned char> SPI::exchange(Device::Data device_data, std::string tx_data, int count, int cs) {
     /*
         sends and receives data using the SPI interface
         
@@ -144,33 +139,17 @@ vector<unsigned char> SPI::exchange(HDWF device_handle, string data, int count, 
         
         return:     - integer list containing the received bytes
     */
-    // enable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 0);
-
     // create buffer to write
-    vector<unsigned char> tx_buffer(data.size() + 1);
-    vector<char> temporal(data.size() + 1);
-    strcpy(temporal.data(), data.c_str());
-    for (int index = 0; index < tx_buffer.size(); index++) {
-        tx_buffer[index] = (unsigned char)(temporal[index]);
+    std::vector<unsigned char> buffer(tx_data.size() + 1);
+    for (int index = 0; index < buffer.size(); index++) {
+        buffer[index] = (unsigned char)(tx_data[index]);
     }
-
-    // create buffer to store data
-    vector<unsigned char> rx_buffer(count);
-
-    // write to MOSI and read from MISO
-    FDwfDigitalSpiWriteRead(device_handle, 1, 8, tx_buffer.data(), tx_buffer.size(), rx_buffer.data(), rx_buffer.size());
-
-    // disable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 1);
-
-    // decode data
-    return rx_buffer;
+    return exchange(device_data, buffer, count, cs);
 }
 
 /* ----------------------------------------------------- */
 
-vector<unsigned char> SPI::exchange(HDWF device_handle, vector<unsigned char> data, int count, int cs) {
+std::vector<unsigned char> SPI::exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int cs) {
     /*
         sends and receives data using the SPI interface
         
@@ -182,24 +161,24 @@ vector<unsigned char> SPI::exchange(HDWF device_handle, vector<unsigned char> da
         return:     - integer list containing the received bytes
     */
     // enable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 0);
+    FDwfDigitalSpiSelect(device_data.handle, cs, 0);
 
     // create buffer to store data
-    vector<unsigned char> rx_buffer(count);
+    std::vector<unsigned char> rx_data(count);
 
     // write to MOSI and read from MISO
-    FDwfDigitalSpiWriteRead(device_handle, 1, 8, data.data(), data.size(), rx_buffer.data(), rx_buffer.size());
+    FDwfDigitalSpiWriteRead(device_data.handle, 1, 8, tx_data.data(), tx_data.size(), rx_data.data(), rx_data.size());
 
     // disable the chip select line
-    FDwfDigitalSpiSelect(device_handle, cs, 1);
+    FDwfDigitalSpiSelect(device_data.handle, cs, 1);
 
     // decode data
-    return rx_buffer;
+    return rx_data;
 }
 
 /* ----------------------------------------------------- */
 
-spi_data SPI::spy(HDWF device_handle, int count, int cs, int sck, int mosi, int miso, int word_size) {
+//spi_data SPI::spy(Device::Data device_data, int count, int cs, int sck, int mosi, int miso, int word_size) {
     /*
         receives data from SPI
 
@@ -214,37 +193,37 @@ spi_data SPI::spy(HDWF device_handle, int count, int cs, int sck, int mosi, int 
         returns:    - class containing the received data: mosi, miso, errors
     */
     // variable to store results
-    spi_data data;
+/*    spi_data data;
     unsigned long long temp_mosi = 0;
     unsigned long long temp_miso = 0;
 
     // record mode
-    FDwfDigitalInAcquisitionModeSet(device_handle, acqmodeRecord);
+    FDwfDigitalInAcquisitionModeSet(device_data.handle, acqmodeRecord);
 
     // for sync mode set divider to -1 
-    FDwfDigitalInDividerSet(device_handle, -1);
+    FDwfDigitalInDividerSet(device_data.handle, -1);
 
     // 8 bit per sample format, DIO 0-7
-    FDwfDigitalInSampleFormatSet(device_handle, 8);
+    FDwfDigitalInSampleFormatSet(device_data.handle, 8);
 
     // continuous sampling 
-    FDwfDigitalInTriggerPositionSet(device_handle, -1);
+    FDwfDigitalInTriggerPositionSet(device_data.handle, -1);
 
     // in sync mode the trigger is used for sampling condition
     // trigger detector mask: low & high & (rising | falling)
-    FDwfDigitalInTriggerSet(device_handle, 0, 0, (1 << sck) | (1 << cs), 0);
+    FDwfDigitalInTriggerSet(device_data.handle, 0, 0, (1 << sck) | (1 << cs), 0);
     // sample on clock rising edge for sampling bits, or CS rising edge to detect frames
 
     // start detection
-    FDwfDigitalInConfigure(device_handle, 0, 1);
+    FDwfDigitalInConfigure(device_data.handle, 0, 1);
 
     // fill buffer
     unsigned char status = 0;
     int available = 0;
     int lost = 0;
     int corrupted = 0;
-    FDwfDigitalInStatus(device_handle, 1, &status);
-    FDwfDigitalInStatusRecord(device_handle, &available, &lost, &corrupted);
+    FDwfDigitalInStatus(device_data.handle, 1, &status);
+    FDwfDigitalInStatusRecord(device_data.handle, &available, &lost, &corrupted);
 
     // check data integrity
     if (lost != 0) {
@@ -261,7 +240,7 @@ spi_data SPI::spy(HDWF device_handle, int count, int cs, int sck, int mosi, int 
     
     // load data from internal buffer
     vector<unsigned char> rx_data(available);
-    FDwfDigitalInStatusData(device_handle, rx_data.data(), available);
+    FDwfDigitalInStatusData(device_data.handle, rx_data.data(), available);
 
     // get message
     int bit_count = 0;
@@ -306,30 +285,32 @@ spi_data SPI::spy(HDWF device_handle, int count, int cs, int sck, int mosi, int 
     data.mosi = convert(temp_mosi);
     data.miso = convert(temp_miso);
     return data;
-}
+}*/
 
 /* ----------------------------------------------------- */
 
-void SPI::close(HDWF device_handle) {
+void SPI::close(Device::Data device_data) {
     /*
         reset the spi interface
     */
-    FDwfDigitalSpiReset(device_handle);
+    FDwfDigitalSpiReset(device_data.handle);
+    state.on = false;
+    state.off = true;
     return;
 }
 
 /* ----------------------------------------------------- */
 
-vector<unsigned char> SPI::convert(unsigned long long number) {
+std::vector<unsigned char> SPI::convert(unsigned long long number) {
     /* convert a number to a byte array */
     int index = 0;
-    vector<unsigned char> array;
+    std::vector<unsigned char> array;
     if (number == 0) {
-        array[0] = 0;
+        array.insert(array.end(), 0);
     }
     else {
         while (number > 0) {
-            array[index] = number & 0xFF;
+            array.insert(array.end(), number & 0xFF);
             number >>= 8;
         }
     }

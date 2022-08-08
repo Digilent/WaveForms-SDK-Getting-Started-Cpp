@@ -1,55 +1,61 @@
-/* PROTOCOL: I2C CONTROL FUNCTIONS: open, read, write, exchange, spy, close */
+/* PROTOCOL: I2C CONTROL FUNCTIONS: open, read, write, exchange, close */
 
 /* include the necessary libraries */
 #include <string>
-#include <string.h>
 #include <vector>
+#include "dwf.h"
+#include "../device.h"
 
-using namespace std;
-
-/* include the constants and the WaveForms function library */
-#ifdef _WIN32
-#include "C:/Program Files (x86)/Digilent/WaveFormsSDK/inc/dwf.h"
-#elif __APPLE__
-#include "/Library/Frameworks/dwf.framework/Headers/dwf.h"
-#else
-#include <digilent/waveforms/dwf.h>
-#endif
-
-/* ----------------------------------------------------- */
-
-class i2c_data {
-    public:
-        vector<unsigned char> data;
-        string error;
-        int address;
-        string start;
-        string stop;
-        string direction;
-        i2c_data& operator=(const i2c_data&);
-};
-
-i2c_data& i2c_data::operator=(const i2c_data &data) {
-    if (this != &data) {
-        error = data.error;
-        address = data.address;
-        start = data.start;
-        stop = data.stop;
-        direction = data.direction;
-    }
-    return *this;
-}
-
-/* ----------------------------------------------------- */
+#ifndef WF_PROTOCOL_I2C
+#define WF_PROTOCOL_I2C
 
 class I2C {
+    private:
+        /*class Data {
+            public:
+                std::vector<unsigned char> data;
+                std::string error;
+                int address;
+                std::string start;
+                std::string stop;
+                std::string direction;
+                Data& operator=(const Data &data) {
+                    if (this != &data) {
+                        error = data.error;
+                        address = data.address;
+                        start = data.start;
+                        stop = data.stop;
+                        direction = data.direction;
+                    }
+                    return *this;
+                }
+        };*/
+
+        class State {
+            public:
+                bool on = false;
+                bool off = true;
+                double frequency = 0;
+                State& operator=(const State &data) {
+                    if (this != &data) {
+                        on = data.on;
+                        off = data.off;
+                        frequency = data.frequency;
+                    }
+                    return *this;
+                }
+        };
+
     public:
-        string open(HDWF device_handle, int sda, int scl, double clk_rate = 100e03, bool stretching = true);
-        i2c_data read(HDWF device_handle, int count, int address);
-        string write(HDWF device_handle, string data, int address);
-        string write(HDWF device_handle, vector<unsigned char> data, int address);
-        i2c_data exchange(HDWF device_handle, string data, int count, int address);
-        i2c_data exchange(HDWF device_handle, vector<unsigned char> data, int count, int address);
-        i2c_data spy(HDWF device_handle, int count = 16);
-        void close(HDWF device_handle);
+        State state;
+        void open(Device::Data device_data, int sda, int scl, double clk_rate = 100e03, bool stretching = true, std::string *error=NULL);
+        std::vector<unsigned char> read(Device::Data device_data, int count, int address, std::string *error=NULL);
+        void write(Device::Data device_data, std::string data, int address, std::string *error=NULL);
+        void write(Device::Data device_data, std::vector<unsigned char> data, int address, std::string *error=NULL);
+        std::vector<unsigned char> exchange(Device::Data device_data, std::string tx_data, int count, int address, std::string *error=NULL);
+        std::vector<unsigned char> exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int address, std::string *error=NULL);
+        //std::vector<unsigned char> spy(Device::Data device_data, int count = 16);
+        void close(Device::Data device_data);
 } i2c;
+
+#endif

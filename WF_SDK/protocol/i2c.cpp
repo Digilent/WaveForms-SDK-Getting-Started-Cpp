@@ -1,87 +1,83 @@
-/* PROTOCOL: I2C CONTROL FUNCTIONS: open, read, write, exchange, spy, close */
+/* PROTOCOL: I2C CONTROL FUNCTIONS: open, read, write, exchange, close */
 
 /* include the header */
 #include "i2c.h"
 
 /* ----------------------------------------------------- */
 
-string I2C::open(HDWF device_handle, int sda, int scl, double clk_rate, bool stretching) {
+void I2C::open(Device::Data device_data, int sda, int scl, double clk_rate, bool stretching, std::string *error) {
     /*
         initializes I2C communication
 
-        parameters: - device handle
+        parameters: - device data
                     - sda (DIO line used for data)
                     - scl (DIO line used for clock)
                     - rate (clock frequency in Hz, default is 100KHz)
                     - stretching (enables/disables clock stretching)
-
-        returns:    - error message or empty string
     */
     // reset the interface
-    FDwfDigitalI2cReset(device_handle);
+    FDwfDigitalI2cReset(device_data.handle);
 
     // clock stretching
     if (stretching == true) {
-        FDwfDigitalI2cStretchSet(device_handle, 1);
+        FDwfDigitalI2cStretchSet(device_data.handle, 1);
     }
     else {
-        FDwfDigitalI2cStretchSet(device_handle, 0);
+        FDwfDigitalI2cStretchSet(device_data.handle, 0);
     }
 
     // set clock frequency
-    FDwfDigitalI2cRateSet(device_handle, clk_rate);
+    FDwfDigitalI2cRateSet(device_data.handle, clk_rate);
+    state.frequency = clk_rate;
 
     //  set communication lines
-    FDwfDigitalI2cSclSet(device_handle, scl);
-    FDwfDigitalI2cSdaSet(device_handle, sda);
+    FDwfDigitalI2cSclSet(device_data.handle, scl);
+    FDwfDigitalI2cSdaSet(device_data.handle, sda);
 
     // check bus
     int nak = 0;
-    FDwfDigitalI2cClear(device_handle, &nak);
+    FDwfDigitalI2cClear(device_data.handle, &nak);
     if (nak == 0) {
-        string error = "Error: I2C bus lockup";
-        return error;
+        *error = "Error: I2C bus lockup";
+        return;
     }
 
 
     // write 0 bytes
-    FDwfDigitalI2cWrite(device_handle, 0, 0, 0, &nak);
+    FDwfDigitalI2cWrite(device_data.handle, 0, 0, 0, &nak);
     if (nak != 0) {
-        string error = "NAK: index " + to_string(nak);
-        return error;
+        *error = "NAK: index " + std::to_string(nak);
+        return;
     }
     
-    string error = "";
-    return error;
+    state.on = true;
+    state.off = false;
+    *error = "";
+    return;
 }
 
 /* ----------------------------------------------------- */
 
-i2c_data I2C::read(HDWF device_handle, int count, int address) {
+std::vector<unsigned char> I2C::read(Device::Data device_data, int count, int address, std::string *error) {
     /*
         receives data from I2C
         
-        parameters: - device handle
-                    - count (number of bytes to receive)
+        parameters: - device data
+                    - number of bytes to receive
                     - address (8-bit address of the slave device)
+                    - pointer to error string
         
-        return:     - integer list containing the received bytes
-                    - error message or empty string
+        return:     - integer list of received data bytes
     */
-    // create buffer to store data
-    vector<unsigned char> buffer(count);
-
     // receive
     int nak = 0;
-    FDwfDigitalI2cRead(device_handle, address << 1, buffer.data(), count, &nak);
-
-    i2c_data data;
-    data.data = buffer;
-    data.error = "";
+    std::vector<unsigned char> data(count);
+    FDwfDigitalI2cRead(device_data.handle, address << 1, data.data(), data.size(), &nak);
 
     // check for not acknowledged
+    *error = "";
     if (nak != 0) {
-        data.error = "NAK: index " + to_string(nak);
+        *error = "NAK: index " + std::to_string(nak);
     }
     
     return data;
@@ -89,141 +85,100 @@ i2c_data I2C::read(HDWF device_handle, int count, int address) {
 
 /* ----------------------------------------------------- */
 
-string I2C::write(HDWF device_handle, string data, int address) {
+void I2C::write(Device::Data device_data, std::string data, int address, std::string *error) {
     /*
         send data through I2C
         
         parameters: - device handle
                     - data of type string, int, or list of characters/integers
                     - address (8-bit address of the slave device)
-                    
-        returns:    - error message or empty string
+                    - pointer to error string
     */
     // encode the string into a string buffer
-    vector<unsigned char> buffer(data.size() + 1);
-    vector<char> temporal(data.size() + 1);
-    strcpy(temporal.data(), data.c_str());
+    std::vector<unsigned char> buffer(data.size() + 1);
     for (int index = 0; index < buffer.size(); index++) {
-        buffer[index] = (unsigned char)(temporal[index]);
+        buffer[index] = (unsigned char)(data[index]);
     }
-
-    // send
-    int nak = 0;
-    FDwfDigitalI2cWrite(device_handle, address << 1, buffer.data(), buffer.size(), &nak);
-
-    // check for not acknowledged
-    if (nak != 0) {
-        string error = "NAK: index " + to_string(nak);
-        return error;
-    }
-    
-    string error = "";
-    return error;
+    write(device_data, buffer, address, error);
+    return;
 }
 
 /* ----------------------------------------------------- */
 
-string I2C::write(HDWF device_handle, vector<unsigned char> data, int address) {
+void I2C::write(Device::Data device_data, std::vector<unsigned char> data, int address, std::string *error) {
     /*
         send data through I2C
         
         parameters: - device handle
                     - data of type string, int, or list of characters/integers
                     - address (8-bit address of the slave device)
-                    
-        returns:    - error message or empty string
+                    - pointer to error string
     */
     // send
     int nak = 0;
-    FDwfDigitalI2cWrite(device_handle, address << 1, data.data(), data.size(), &nak);
+    FDwfDigitalI2cWrite(device_data.handle, address << 1, data.data(), data.size(), &nak);
 
     // check for not acknowledged
+    *error = "";
     if (nak != 0) {
-        string error = "NAK: index " + to_string(nak);
-        return error;
+        *error = "NAK: index " + std::to_string(nak);
     }
     
-    string error = "";
-    return error;
+    return;
 }
 
 /* ----------------------------------------------------- */
 
-i2c_data I2C::exchange(HDWF device_handle, string data, int count, int address) {
+std::vector<unsigned char> I2C::exchange(Device::Data device_data, std::string tx_data, int count, int address, std::string *error) {
     /*
         sends and receives data using the I2C interface
         
         parameters: - device handle
                     - data of type string, int, or list of characters/integers
-                    - count (number of bytes to receive)
+                    - number of bytes to receive
                     - address (8-bit address of the slave device)
+                    - pointer to error string
         
-        return:     - integer list containing the received bytes
-                    - error message or empty string
+        return:     - integer list of received bytes
     */
-    // create buffer to store data
-    vector<unsigned char> rx_buffer(count);
-
     // encode the string into a string buffer
-    vector<unsigned char> tx_buffer(data.size() + 1);
-    vector<char> temporal(data.size() + 1);
-    strcpy(temporal.data(), data.c_str());
-    for (int index = 0; index < tx_buffer.size(); index++) {
-        tx_buffer[index] = (unsigned char)(temporal[index]);
+    std::vector<unsigned char> buffer(tx_data.size() + 1);
+    for (int index = 0; index < buffer.size(); index++) {
+        buffer[index] = (unsigned char)(tx_data[index]);
     }
 
-    // send and receive
-    int nak = 0;
-    FDwfDigitalI2cWriteRead(device_handle, address << 1, tx_buffer.data(), tx_buffer.size(), rx_buffer.data(), count, &nak);
-
-    i2c_data out_data;
-    out_data.data = rx_buffer;
-    out_data.error = "";
-
-    // check for not acknowledged
-    if (nak != 0) {
-        out_data.error = "NAK: index " + to_string(nak);
-    }
-    
-    return out_data;
+    return exchange(device_data, buffer, count, address, error);
 }
 
 /* ----------------------------------------------------- */
 
-i2c_data I2C::exchange(HDWF device_handle, vector<unsigned char> data, int count, int address) {
+std::vector<unsigned char> I2C::exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int address, std::string *error) {
     /*
         sends and receives data using the I2C interface
         
         parameters: - device handle
                     - data of type string, int, or list of characters/integers
-                    - count (number of bytes to receive)
+                    - number of bytes to receive
                     - address (8-bit address of the slave device)
         
-        return:     - integer list containing the received bytes
-                    - error message or empty string
+        return:     - integer list of received bytes
     */
-    // create buffer to store data
-    vector<unsigned char> rx_buffer(count);
-
     // send and receive
     int nak = 0;
-    FDwfDigitalI2cWriteRead(device_handle, address << 1, data.data(), data.size(), rx_buffer.data(), count, &nak);
-
-    i2c_data out_data;
-    out_data.data = rx_buffer;
-    out_data.error = "";
+    std::vector<unsigned char> rx_data(count);
+    FDwfDigitalI2cWriteRead(device_data.handle, address << 1, tx_data.data(), tx_data.size(), rx_data.data(), rx_data.size(), &nak);
 
     // check for not acknowledged
+    *error = "";
     if (nak != 0) {
-        out_data.error = "NAK: index " + to_string(nak);
+        *error = "NAK: index " + std::to_string(nak);
     }
-    
-    return out_data;
+    return rx_data;
 }
 
 /* ----------------------------------------------------- */
 
-i2c_data I2C::spy(HDWF device_handle, int count) {
+//std::string I2C::spy(Device::Data device_data, int count, std::string *error) {
     /*
         receives data from I2C
         
@@ -234,17 +189,17 @@ i2c_data I2C::spy(HDWF device_handle, int count) {
                     - error message or empty string
     */
     // variable to store the results
-    i2c_data data;
+/*    i2c_data data;
 
     // start the interfcae
-    FDwfDigitalI2cSpyStart(device_handle);
+    FDwfDigitalI2cSpyStart(device_data.handle);
 
     // read data
     int start = 0;
     int stop = 0;
     vector<unsigned char> rx_data(count);
     int nak = 0;
-    if (FDwfDigitalI2cSpyStatus(device_handle, &start, &stop, rx_data.data(), &count, &nak) == 0) {
+    if (FDwfDigitalI2cSpyStatus(device_data.handle, &start, &stop, rx_data.data(), &count, &nak) == 0) {
         string error = "Communication with the device failed.";
         data.error = error;
     }
@@ -286,14 +241,16 @@ i2c_data I2C::spy(HDWF device_handle, int count) {
     }
     
     return data;
-}
+}*/
 
 /* ----------------------------------------------------- */
 
-void I2C::close(HDWF device_handle) {
+void I2C::close(Device::Data device_data) {
     /*
         reset the i2c interface
     */
-    FDwfDigitalI2cReset(device_handle);
+    FDwfDigitalI2cReset(device_data.handle);
+    state.on = false;
+    state.off = true;
     return;
 }
