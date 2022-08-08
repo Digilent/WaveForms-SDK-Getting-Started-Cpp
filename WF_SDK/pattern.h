@@ -1,21 +1,13 @@
-/* PATTERN GENERATOR CONTROL FUNCTIONS: generate, close */
+/* PATTERN GENERATOR CONTROL FUNCTIONS: generate, close, enable, disable */
 
 /* include the necessary libraries */
 #include <math.h>
 #include <vector>
+#include "dwf.h"
+#include "device.h"
 
-using namespace std;
-
-/* include the constants and the WaveForms function library */
-#ifdef _WIN32
-#include "C:/Program Files (x86)/Digilent/WaveFormsSDK/inc/dwf.h"
-#elif __APPLE__
-#include "/Library/Frameworks/dwf.framework/Headers/dwf.h"
-#else
-#include <digilent/waveforms/dwf.h>
-#endif
-
-/* ----------------------------------------------------- */
+#ifndef WF_PATTERN
+#define WF_PATTERN
 
 class Pattern {
     private:
@@ -36,9 +28,39 @@ class Pattern {
                 const TRIGSRC external[5] = {trigsrcNone, trigsrcExternal1, trigsrcExternal2, trigsrcExternal3, trigsrcExternal4};
         };
 
+        class Idle_State {
+            /* idle states */
+            public:
+                int initial = DwfDigitalOutIdleInit;
+                int high = DwfDigitalOutIdleHigh;
+                int low = DwfDigitalOutIdleLow;
+                int high_impedance = DwfDigitalOutIdleZet;
+        };
+
+        class State {
+            public:
+                bool on = false;
+                bool off = true;
+                std::vector<bool> channel{false, false, false, false, false, false, false, false, false, false, false, false, false, false, false, false};
+                State& operator=(const State &data) {
+                    if (this != &data) {
+                        on = data.on;
+                        off = data.off;
+                        channel = data.channel;
+                    }
+                    return *this;
+                }
+        };
+
     public:
         Function function;
         Trigger_Source trigger_source;
-        void generate(HDWF device_handle, int channel, DwfDigitalOutType function, double frequency, double duty_cycle = 50.0, vector<unsigned char> data = vector<unsigned char>(), double wait = 0, int repeat = 0, bool trigger_enabled = false, TRIGSRC trigger_source = trigsrcNone, bool trigger_edge_rising = true);
-        void close(HDWF device_handle);
+        Idle_State idle_state;
+        State state;
+        void generate(Device::Data device_data, int channel, DwfDigitalOutType function, double frequency, double duty_cycle = 50.0, std::vector<unsigned short> data = std::vector<unsigned short>(), double wait = 0, int repeat = 0, int run_time = 0, DwfDigitalOutIdle idle = DwfDigitalOutIdleInit, bool trigger_enabled = false, TRIGSRC trigger_source = trigsrcNone, bool trigger_edge_rising = true);
+        void close(Device::Data device_data);
+        void enable(Device::Data device_data, int channel);
+        void disable(Device::Data device_data, int channel);
 } pattern;
+
+#endif

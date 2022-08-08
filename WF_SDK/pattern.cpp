@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType function, double frequency, double duty_cycle, vector<unsigned char> data, double wait, int repeat, bool trigger_enabled, TRIGSRC trigger_source, bool trigger_edge_rising) {
+void Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutType function, double frequency, double duty_cycle, std::vector<unsigned short> data, double wait, int repeat, int run_time, DwfDigitalOutIdle idle, bool trigger_enabled, TRIGSRC trigger_source, bool trigger_edge_rising) {
     /*
         generate a logic signal
         
@@ -16,55 +16,73 @@ void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType functi
                     - data list, used only if function = custom, default is empty
                     - wait time in seconds, default is 0 seconds
                     - repeat count, default is infinite (0)
+                    - run time in seconds, 0=infinite, -1=auto
+                    - idle state
                     - trigger_enabled - include/exclude trigger from repeat cycle
                     - trigger_source - possible: none, analog, digital, external[1-4]
                     - trigger_edge_rising - True means rising, False means falling, None means either, default is rising
     */
+    
     // get internal clock frequency
     double internal_frequency = 0;
-    FDwfDigitalOutInternalClockInfo(device_handle, &internal_frequency);
+    FDwfDigitalOutInternalClockInfo(device_data.handle, &internal_frequency);
     
     // get counter value range
     unsigned int counter_limit = 0;
-    FDwfDigitalOutCounterInfo(device_handle, 0, 0, &counter_limit);
+    FDwfDigitalOutCounterInfo(device_data.handle, 0, 0, &counter_limit);
     
     // calculate the divider for the given signal frequency
-    int divider = int(ceil(internal_frequency / frequency / counter_limit));
+    int divider;
+    if (function == DwfDigitalOutTypePulse) {
+        divider = int(ceil(internal_frequency / frequency / counter_limit));
+    }
+    else {
+        divider = int(internal_frequency / frequency);
+    }
     
     // enable the respective channel
-    FDwfDigitalOutEnableSet(device_handle, channel, 1);
+    FDwfDigitalOutEnableSet(device_data.handle, channel, 1);
     
     // set output type
-    FDwfDigitalOutTypeSet(device_handle, channel, function);
+    FDwfDigitalOutTypeSet(device_data.handle, channel, function);
     
     // set frequency
-    FDwfDigitalOutDividerSet(device_handle, channel, divider);
+    FDwfDigitalOutDividerSet(device_data.handle, channel, divider);
+
+    // set idle state
+    FDwfDigitalOutIdleSet(device_data.handle, channel, idle);
+
+    // calculate run length
+    if (run_time < 0) {
+        run_time = data.size() / frequency;
+    }
+    FDwfDigitalOutRunSet(device_data.handle, run_time);
     
     // set wait time
-    FDwfDigitalOutWaitSet(device_handle, wait);
+    FDwfDigitalOutWaitSet(device_data.handle, wait);
     
     // set repeat count
-    FDwfDigitalOutRepeatSet(device_handle, repeat);
+    FDwfDigitalOutRepeatSet(device_data.handle, repeat);
     
     // enable triggering
-    FDwfDigitalOutRepeatTriggerSet(device_handle, int(trigger_enabled));
+    FDwfDigitalOutRepeatTriggerSet(device_data.handle, int(trigger_enabled));
     
     if (trigger_enabled == true) {
         // set trigger source
-        FDwfDigitalOutTriggerSourceSet(device_handle, trigger_source);
+        FDwfDigitalOutTriggerSourceSet(device_data.handle, trigger_source);
     
         // set trigger slope
         if (trigger_edge_rising == true) {
             // rising edge
-            FDwfDigitalOutTriggerSlopeSet(device_handle, DwfTriggerSlopeRise);
+            FDwfDigitalOutTriggerSlopeSet(device_data.handle, DwfTriggerSlopeRise);
         }
         else if (trigger_edge_rising == false) {
             // falling edge
-            FDwfDigitalOutTriggerSlopeSet(device_handle, DwfTriggerSlopeFall);
+            FDwfDigitalOutTriggerSlopeSet(device_data.handle, DwfTriggerSlopeFall);
         }
         else {
             // either edge
-            FDwfDigitalOutTriggerSlopeSet(device_handle, DwfTriggerSlopeEither);
+            FDwfDigitalOutTriggerSlopeSet(device_data.handle, DwfTriggerSlopeEither);
         }
     }
 
@@ -75,14 +93,14 @@ void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType functi
         // calculate steps for low and high parts of the period
         int high_steps = int(steps * duty_cycle / 100);
         int low_steps = steps - high_steps;
-        FDwfDigitalOutCounterSet(device_handle, channel, low_steps, high_steps);
+        FDwfDigitalOutCounterSet(device_data.handle, channel, low_steps, high_steps);
     }
     
     // load custom signal data
     else if (function == DwfDigitalOutTypeCustom) {
         // format data
         int buffer_length = (data.size() + 7) >> 3;
-        vector<unsigned char> buffer(buffer_length);
+        std::vector<unsigned short> buffer(buffer_length);
         for (int index = 0; index < data.size(); index++) {
             buffer[index] = 0;
             if (data[index] != 0) {
@@ -91,20 +109,50 @@ void Pattern::generate(HDWF device_handle, int channel, DwfDigitalOutType functi
         }
     
         // load data
-        FDwfDigitalOutDataSet(device_handle, channel, buffer.data(), buffer.size());
+        FDwfDigitalOutDataSet(device_data.handle, channel, buffer.data(), buffer.size());
     }
     
     // start generating the signal
-    FDwfDigitalOutConfigure(device_handle, true);
+    FDwfDigitalOutConfigure(device_data.handle, true);
+    state.on = true;
+    state.off = false;
+    state.channel[channel] = true;
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void Pattern::close(HDWF device_handle) {
+void Pattern::close(Device::Data device_data) {
     /*
         reset the instrument
     */
-    FDwfDigitalOutReset(device_handle);
+    FDwfDigitalOutReset(device_data.handle);
+    state.on = false;
+    state.off = true;
+    for (int index = 0; index < state.channel.size(); index++) {
+        state.channel[index] = false;
+    }
+    return;
+}
+
+/* ----------------------------------------------------- */
+
+void Pattern::enable(Device::Data device_data, int channel) {
+    /* enables a digital output channel */
+    FDwfDigitalOutEnableSet(device_data.handle, channel, 1);
+    FDwfDigitalOutConfigure(device_data.handle, true);
+    state.on = true;
+    state.off = false;
+    state.channel[channel] = true;
+    return;
+}
+
+/* ----------------------------------------------------- */
+
+void Pattern::disable(Device::Data device_data, int channel) {
+    /* disables a digital output channel */
+    FDwfDigitalOutEnableSet(device_data.handle, channel, 0);
+    FDwfDigitalOutConfigure(device_data.handle, true);
+    state.channel[channel] = false;
     return;
 }
