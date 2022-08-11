@@ -34,6 +34,49 @@ void Tools::keyboard_interrupt_reset(Device::Data device_data) {
 
 /* ----------------------------------------------------- */
 
+template <typename T>
+inline T const& Tools::min(T const& a, T const& b) {
+    if (a < b) {
+        return a;
+    }
+    return b;
+}
+
+/* ----------------------------------------------------- */
+
+template <typename T>
+inline T const& Tools::max(T const& a, T const& b) {
+    if (a > b) {
+        return a;
+    }
+    return b;
+}
+
+/* ----------------------------------------------------- */
+
+std::vector<double> Tools::spectrum(std::vector<double> buffer, DwfWindow window, double sample_rate, double frequency_start, double frequency_stop) {
+    // get and apply window
+    int buffer_length = buffer.size();
+    std::vector<double> window_buffer(buffer_length);
+    FDwfSpectrumWindow(window_buffer.data(), buffer_length, window, 1.0, NULL);
+    for (int index = 0; index < buffer_length; index++) {
+        buffer[index] *= window_buffer[index];
+    }
+
+    // get the spectrum
+    int spectrum_length = buffer_length / 2 + 1;
+    std::vector<double> spectrum(spectrum_length);
+    frequency_start = max(frequency_start * 2.0 / sample_rate, 0.0);
+    frequency_stop = min(frequency_stop * 2.0 / sample_rate, 1.0);
+    FDwfSpectrumTransform(buffer.data(), buffer_length, spectrum.data(), NULL, spectrum_length, frequency_start, frequency_stop);
+    for (int index = 0; index < spectrum_length; index++) {
+        spectrum[index] = 20.0 * log10(spectrum[index] / sqrt(2));
+    }
+    return spectrum;
+}
+
+/* ----------------------------------------------------- */
+
 void ISR(int signum) {
     // reset the scope
     FDwfAnalogInReset(device_handle);
