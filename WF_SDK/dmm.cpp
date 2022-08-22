@@ -11,7 +11,7 @@ void DMM::open(Device::Data device_data) {
     */
     // enable the DMM
     for (int channel_index = 0; channel_index < device_data.analog.IO.channel_count; channel_index++) {
-        if (device_data.analog.IO.channel_label[channel_index] == std::string("DMM") || device_data.analog.IO.channel_label[channel_index] == std::string("p25V")) {
+        if (device_data.analog.IO.channel_label[channel_index] == std::string("DMM")) {
             state.channel = channel_index;
             break;
         }
