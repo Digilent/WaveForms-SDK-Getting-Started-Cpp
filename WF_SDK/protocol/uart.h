@@ -8,6 +8,7 @@
 
 #ifndef WF_PROTOCOL_UART
 #define WF_PROTOCOL_UART
+namespace wf {
 
 class UART {
     private:
@@ -34,4 +35,5 @@ class UART {
         void close(Device::Data device_data);
 } uart;
 
+}
 #endif

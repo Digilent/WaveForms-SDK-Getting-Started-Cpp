@@ -8,6 +8,7 @@
 
 #ifndef WF_STATIC
 #define WF_STATIC
+namespace wf {
 
 class Static {
     private:
@@ -42,4 +43,5 @@ class Static {
         void close(Device::Data device_data);
 } static_;
 
+}
 #endif

@@ -8,6 +8,7 @@
 
 #ifndef WF_PROTOCOL_SPI
 #define WF_PROTOCOL_SPI
+namespace wf {
 
 class SPI {
     private:
@@ -43,4 +44,5 @@ class SPI {
         void close(Device::Data device_data);
 } spi;
 
+}
 #endif

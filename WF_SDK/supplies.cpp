@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Supplies::switch_(Device::Data device_data, Data supplies_data) {
+void wf::Supplies::switch_(Device::Data device_data, Data supplies_data) {
     /*
         turn the power supplies on/off
 
@@ -164,7 +164,7 @@ void Supplies::switch_(Device::Data device_data, Data supplies_data) {
 
 /* ----------------------------------------------------- */
 
-void Supplies::close(Device::Data device_data) {
+void wf::Supplies::close(Device::Data device_data) {
     /*
         reset the supplies
     */
@@ -176,7 +176,7 @@ void Supplies::close(Device::Data device_data) {
 
 /* ----------------------------------------------------- */
 
-double Supplies::min(double a, double b) {
+double wf::Supplies::min(double a, double b) {
     if (a > b) {
         return b;
     }
@@ -185,7 +185,7 @@ double Supplies::min(double a, double b) {
 
 /* ----------------------------------------------------- */
 
-double Supplies::max(double a, double b) {
+double wf::Supplies::max(double a, double b) {
     if (a < b) {
         return b;
     }

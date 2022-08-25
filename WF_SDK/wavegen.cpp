@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Wavegen::generate(Device::Data device_data, int channel, FUNC function, double offset, double frequency, double amplitude, double symmetry, double wait, double run_time, int repeat, std::vector<double> data) {
+void wf::Wavegen::generate(Device::Data device_data, int channel, FUNC function, double offset, double frequency, double amplitude, double symmetry, double wait, double run_time, int repeat, std::vector<double> data) {
     /*
         generate an analog signal
 
@@ -64,7 +64,7 @@ void Wavegen::generate(Device::Data device_data, int channel, FUNC function, dou
 
 /* ----------------------------------------------------- */
 
-void Wavegen::close(Device::Data device_data, int channel) {
+void wf::Wavegen::close(Device::Data device_data, int channel) {
     /*
         reset the wavegen
     */
@@ -85,7 +85,7 @@ void Wavegen::close(Device::Data device_data, int channel) {
 
 /* ----------------------------------------------------- */
 
-void Wavegen::enable(Device::Data device_data, int channel) {
+void wf::Wavegen::enable(Device::Data device_data, int channel) {
     /*
         enables an analog output channel
     */
@@ -99,7 +99,7 @@ void Wavegen::enable(Device::Data device_data, int channel) {
 
 /* ----------------------------------------------------- */
 
-void Wavegen::disable(Device::Data device_data, int channel) {
+void wf::Wavegen::disable(Device::Data device_data, int channel) {
     /*
         disables an analog output channel
     */

@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-Device::Data Device::open(std::string device, int config) {
+wf::Device::Data wf::Device::open(std::string device, int config) {
     /*
         open a specific device
 
@@ -86,7 +86,7 @@ Device::Data Device::open(std::string device, int config) {
 
 /* ----------------------------------------------------- */
 
-void Device::check_error(Data device_data) {
+void wf::Device::check_error(Data device_data) {
     /*
         check for connection errors
     */
@@ -113,7 +113,7 @@ void Device::check_error(Data device_data) {
 
 /* ----------------------------------------------------- */
 
-void Device::close(Data device_data) {
+void wf::Device::close(Data device_data) {
     /*
         close a specific device
     */
@@ -127,7 +127,7 @@ void Device::close(Data device_data) {
 
 /* ----------------------------------------------------- */
 
-double Device::temperature(Data device_data) {
+double wf::Device::temperature(Data device_data) {
     /*
         return the board temperature
     */
@@ -164,7 +164,7 @@ double Device::temperature(Data device_data) {
 
 /* ----------------------------------------------------- */
 
-void Device::get_info(Data* device_data) {
+void wf::Device::get_info(Data* device_data) {
     /*
         get device information
     */

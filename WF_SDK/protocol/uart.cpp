@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void UART::open(Device::Data device_data, int rx, int tx, int baud_rate, bool parity, int data_bits, int stop_bits) {
+void wf::UART::open(Device::Data device_data, int rx, int tx, int baud_rate, bool parity, int data_bits, int stop_bits) {
     /*
         initializes UART communication
         
@@ -61,7 +61,7 @@ void UART::open(Device::Data device_data, int rx, int tx, int baud_rate, bool pa
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> UART::read(Device::Data device_data, std::string *error) {
+std::vector<unsigned char> wf::UART::read(Device::Data device_data, std::string *error) {
     /*
         receives data from UART
         
@@ -119,7 +119,7 @@ std::vector<unsigned char> UART::read(Device::Data device_data, std::string *err
 
 /* ----------------------------------------------------- */
 
-void UART::write(Device::Data device_data, std::string data) {
+void wf::UART::write(Device::Data device_data, std::string data) {
     /*
         send data through UART
         
@@ -137,7 +137,7 @@ void UART::write(Device::Data device_data, std::string data) {
 
 /* ----------------------------------------------------- */
 
-void UART::write(Device::Data device_data, std::vector<unsigned char> data) {
+void wf::UART::write(Device::Data device_data, std::vector<unsigned char> data) {
     /*
         send data through UART
         
@@ -155,7 +155,7 @@ void UART::write(Device::Data device_data, std::vector<unsigned char> data) {
 
 /* ----------------------------------------------------- */
 
-void UART::close(Device::Data device_data) {
+void wf::UART::close(Device::Data device_data) {
     /*
         reset the uart interface
     */

@@ -7,6 +7,7 @@
 
 #ifndef WF_LOGIC
 #define WF_LOGIC
+namespace wf {
 
 class Logic {
     private:
@@ -52,4 +53,5 @@ class Logic {
         void close(Device::Data device_data);
 } logic;
 
+}
 #endif

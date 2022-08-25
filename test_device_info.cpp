@@ -2,6 +2,8 @@
 #include <fstream>          // needed for input/output
 #include <string>           // needed for string operations
 
+using namespace wf;
+
 /* ----------------------------------------------------- */
 
 int main(void) {

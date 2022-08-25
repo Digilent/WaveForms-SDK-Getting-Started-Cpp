@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutType function, double frequency, double duty_cycle, std::vector<unsigned short> data, double wait, int repeat, int run_time, DwfDigitalOutIdle idle, bool trigger_enabled, TRIGSRC trigger_source, bool trigger_edge_rising) {
+void wf::Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutType function, double frequency, double duty_cycle, std::vector<unsigned short> data, double wait, int repeat, int run_time, DwfDigitalOutIdle idle, bool trigger_enabled, TRIGSRC trigger_source, bool trigger_edge_rising) {
     /*
         generate a logic signal
         
@@ -122,7 +122,7 @@ void Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutType 
 
 /* ----------------------------------------------------- */
 
-void Pattern::close(Device::Data device_data) {
+void wf::Pattern::close(Device::Data device_data) {
     /*
         reset the instrument
     */
@@ -137,7 +137,7 @@ void Pattern::close(Device::Data device_data) {
 
 /* ----------------------------------------------------- */
 
-void Pattern::enable(Device::Data device_data, int channel) {
+void wf::Pattern::enable(Device::Data device_data, int channel) {
     /* enables a digital output channel */
     FDwfDigitalOutEnableSet(device_data.handle, channel, 1);
     FDwfDigitalOutConfigure(device_data.handle, true);
@@ -149,7 +149,7 @@ void Pattern::enable(Device::Data device_data, int channel) {
 
 /* ----------------------------------------------------- */
 
-void Pattern::disable(Device::Data device_data, int channel) {
+void wf::Pattern::disable(Device::Data device_data, int channel) {
     /* disables a digital output channel */
     FDwfDigitalOutEnableSet(device_data.handle, channel, 0);
     FDwfDigitalOutConfigure(device_data.handle, true);

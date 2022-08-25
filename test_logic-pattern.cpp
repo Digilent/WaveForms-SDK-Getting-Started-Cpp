@@ -3,6 +3,8 @@
 #include <fstream>
 #include <vector>
 
+using namespace wf;
+
 #define DIO_IN 14
 #define DIO_OUT 14
 

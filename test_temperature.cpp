@@ -2,6 +2,8 @@
 #include <iostream>         // needed for input/output
 #include <cmath>            // needed for ceil
 
+using namespace wf;
+
 int main(void) {
     // connect to the device
     Device::Data device_data = device.open();

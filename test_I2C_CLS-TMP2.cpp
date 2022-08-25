@@ -3,6 +3,8 @@
 #include <vector>           // needed for vector handling
 #include <sstream>          // needed for string manipulation
 
+using namespace wf;
+
 // define DIO lines
 int sda = 0;
 int scl = 1;

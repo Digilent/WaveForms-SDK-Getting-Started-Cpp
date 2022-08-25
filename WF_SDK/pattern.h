@@ -8,6 +8,7 @@
 
 #ifndef WF_PATTERN
 #define WF_PATTERN
+namespace wf {
 
 class Pattern {
     private:
@@ -63,4 +64,5 @@ class Pattern {
         void disable(Device::Data device_data, int channel);
 } pattern;
 
+}
 #endif

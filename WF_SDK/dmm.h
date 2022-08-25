@@ -7,6 +7,7 @@
 
 #ifndef WF_DMM
 #define WF_DMM
+namespace wf {
 
 class DMM {
     private:
@@ -71,4 +72,5 @@ class DMM {
         void close(Device::Data device_data);
 } dmm;
 
+}
 #endif

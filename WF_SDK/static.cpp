@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Static::set_mode(Device::Data device_data, int channel, bool output) {
+void wf::Static::set_mode(Device::Data device_data, int channel, bool output) {
     /*
         set a DIO line as input, or as output
 
@@ -37,7 +37,7 @@ void Static::set_mode(Device::Data device_data, int channel, bool output) {
 
 /* ----------------------------------------------------- */
 
-bool Static::get_state(Device::Data device_data, int channel) {
+bool wf::Static::get_state(Device::Data device_data, int channel) {
     /*
         get the state of a DIO line
 
@@ -64,7 +64,7 @@ bool Static::get_state(Device::Data device_data, int channel) {
 
 /* ----------------------------------------------------- */
 
-void Static::set_state(Device::Data device_data, int channel, bool value) {
+void wf::Static::set_state(Device::Data device_data, int channel, bool value) {
     /*
         set a DIO line as input, or as output
 
@@ -92,7 +92,7 @@ void Static::set_state(Device::Data device_data, int channel, bool value) {
 
 /* ----------------------------------------------------- */
 
-void Static::set_current(Device::Data device_data, int current) {
+void wf::Static::set_current(Device::Data device_data, int current) {
     /*
         limit the output current of the DIO lines
 
@@ -118,7 +118,7 @@ void Static::set_current(Device::Data device_data, int current) {
 
 /* ----------------------------------------------------- */
 
-void Static::set_pull(Device::Data device_data, int channel, bool direction) {
+void wf::Static::set_pull(Device::Data device_data, int channel, bool direction) {
     /*
         pull a DIO line up, or down
 
@@ -177,7 +177,7 @@ void Static::set_pull(Device::Data device_data, int channel, bool direction) {
 
 /* ----------------------------------------------------- */
 
-void Static::close(Device::Data device_data) {
+void wf::Static::close(Device::Data device_data) {
     /*
         reset the instrument
     */
@@ -194,6 +194,6 @@ void Static::close(Device::Data device_data) {
 
 /* ----------------------------------------------------- */
 
-unsigned int Static::rotate_left(unsigned int number, unsigned int position, unsigned int size) {
+unsigned int wf::Static::rotate_left(unsigned int number, unsigned int position, unsigned int size) {
     return (number << position) | (number >> (size - position));
 }

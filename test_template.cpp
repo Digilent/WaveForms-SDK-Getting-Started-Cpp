@@ -1,6 +1,8 @@
 #include "WF_SDK/WF_SDK.h"  // include all classes and functions
 #include <iostream>         // needed for input/output
 
+using namespace wf;
+
 /* ----------------------------------------------------- */
 
 int main(void) {

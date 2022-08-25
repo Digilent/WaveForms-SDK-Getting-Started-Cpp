@@ -7,6 +7,7 @@
 
 #ifndef WF_WAVEGEN
 #define WF_WAVEGEN
+namespace wf {
 
 class Wavegen {
     private:
@@ -50,4 +51,5 @@ class Wavegen {
         void disable(Device::Data device_data, int channel);
 } wavegen;
 
+}
 #endif

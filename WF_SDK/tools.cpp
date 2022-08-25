@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Tools::sleep(int millis) {
+void wf::Tools::sleep(int millis) {
     int start = get_time();
     int current = get_time();
     while (current - start < millis) {
@@ -16,7 +16,7 @@ void Tools::sleep(int millis) {
 
 /* ----------------------------------------------------- */
 
-int Tools::get_time(void) {
+int wf::Tools::get_time(void) {
     auto time = std::chrono::system_clock::now();
     auto duration = time.time_since_epoch();
     auto millis = std::chrono::duration_cast<std::chrono::milliseconds>(duration);
@@ -26,7 +26,7 @@ int Tools::get_time(void) {
 
 /* ----------------------------------------------------- */
 
-void Tools::keyboard_interrupt_reset(Device::Data device_data) {
+void wf::Tools::keyboard_interrupt_reset(Device::Data device_data) {
     device_handle = device_data.handle;
     signal(SIGINT, ISR);
     return;
@@ -35,7 +35,7 @@ void Tools::keyboard_interrupt_reset(Device::Data device_data) {
 /* ----------------------------------------------------- */
 
 template <typename T>
-inline T const& Tools::min(T const& a, T const& b) {
+inline T const& wf::Tools::min(T const& a, T const& b) {
     if (a < b) {
         return a;
     }
@@ -45,7 +45,7 @@ inline T const& Tools::min(T const& a, T const& b) {
 /* ----------------------------------------------------- */
 
 template <typename T>
-inline T const& Tools::max(T const& a, T const& b) {
+inline T const& wf::Tools::max(T const& a, T const& b) {
     if (a > b) {
         return a;
     }
@@ -54,7 +54,7 @@ inline T const& Tools::max(T const& a, T const& b) {
 
 /* ----------------------------------------------------- */
 
-std::vector<double> Tools::spectrum(std::vector<double> buffer, DwfWindow window, double sample_rate, double frequency_start, double frequency_stop) {
+std::vector<double> wf::Tools::spectrum(std::vector<double> buffer, DwfWindow window, double sample_rate, double frequency_start, double frequency_stop) {
     // get and apply window
     int buffer_length = buffer.size();
     std::vector<double> window_buffer(buffer_length);
@@ -77,7 +77,7 @@ std::vector<double> Tools::spectrum(std::vector<double> buffer, DwfWindow window
 
 /* ----------------------------------------------------- */
 
-void ISR(int signum) {
+void wf::ISR(int signum) {
     // reset the scope
     FDwfAnalogInReset(device_handle);
     // reset the wavegen

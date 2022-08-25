@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void I2C::open(Device::Data device_data, int sda, int scl, double clk_rate, bool stretching, std::string *error) {
+void wf::I2C::open(Device::Data device_data, int sda, int scl, double clk_rate, bool stretching, std::string *error) {
     /*
         initializes I2C communication
 
@@ -58,7 +58,7 @@ void I2C::open(Device::Data device_data, int sda, int scl, double clk_rate, bool
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> I2C::read(Device::Data device_data, int count, int address, std::string *error) {
+std::vector<unsigned char> wf::I2C::read(Device::Data device_data, int count, int address, std::string *error) {
     /*
         receives data from I2C
         
@@ -85,7 +85,7 @@ std::vector<unsigned char> I2C::read(Device::Data device_data, int count, int ad
 
 /* ----------------------------------------------------- */
 
-void I2C::write(Device::Data device_data, std::string data, int address, std::string *error) {
+void wf::I2C::write(Device::Data device_data, std::string data, int address, std::string *error) {
     /*
         send data through I2C
         
@@ -105,7 +105,7 @@ void I2C::write(Device::Data device_data, std::string data, int address, std::st
 
 /* ----------------------------------------------------- */
 
-void I2C::write(Device::Data device_data, std::vector<unsigned char> data, int address, std::string *error) {
+void wf::I2C::write(Device::Data device_data, std::vector<unsigned char> data, int address, std::string *error) {
     /*
         send data through I2C
         
@@ -129,7 +129,7 @@ void I2C::write(Device::Data device_data, std::vector<unsigned char> data, int a
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> I2C::exchange(Device::Data device_data, std::string tx_data, int count, int address, std::string *error) {
+std::vector<unsigned char> wf::I2C::exchange(Device::Data device_data, std::string tx_data, int count, int address, std::string *error) {
     /*
         sends and receives data using the I2C interface
         
@@ -152,7 +152,7 @@ std::vector<unsigned char> I2C::exchange(Device::Data device_data, std::string t
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> I2C::exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int address, std::string *error) {
+std::vector<unsigned char> wf::I2C::exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int address, std::string *error) {
     /*
         sends and receives data using the I2C interface
         
@@ -178,7 +178,7 @@ std::vector<unsigned char> I2C::exchange(Device::Data device_data, std::vector<u
 
 /* ----------------------------------------------------- */
 
-//std::string I2C::spy(Device::Data device_data, int count, std::string *error) {
+//std::string wf::I2C::spy(Device::Data device_data, int count, std::string *error) {
     /*
         receives data from I2C
         
@@ -245,7 +245,7 @@ std::vector<unsigned char> I2C::exchange(Device::Data device_data, std::vector<u
 
 /* ----------------------------------------------------- */
 
-void I2C::close(Device::Data device_data) {
+void wf::I2C::close(Device::Data device_data) {
     /*
         reset the i2c interface
     */

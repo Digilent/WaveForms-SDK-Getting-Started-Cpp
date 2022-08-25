@@ -7,6 +7,7 @@
 
 #ifndef WF_TOOLS
 #define WF_TOOLS
+namespace wf {
 
 void ISR(int signum);
 int device_handle = 0;
@@ -36,4 +37,5 @@ class Tools {
         std::vector<double> spectrum(std::vector<double> buffer, DwfWindow window, double sample_rate, double frequency_start, double frequency_stop);
 } tools;
 
+}
 #endif

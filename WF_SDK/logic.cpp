@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Logic::open(Device::Data device_data, double sampling_frequency, int buffer_size) {
+void wf::Logic::open(Device::Data device_data, double sampling_frequency, int buffer_size) {
     /*
         initialize the logic analyzer
 
@@ -42,7 +42,7 @@ void Logic::open(Device::Data device_data, double sampling_frequency, int buffer
 
 /* ----------------------------------------------------- */
 
-void Logic::trigger(Device::Data device_data, bool enable, int channel, int position, double timeout, bool rising_edge, double length_min, double length_max, int count) {
+void wf::Logic::trigger(Device::Data device_data, bool enable, int channel, int position, double timeout, bool rising_edge, double length_min, double length_max, int count) {
     /*
         set up triggering
 
@@ -97,7 +97,7 @@ void Logic::trigger(Device::Data device_data, bool enable, int channel, int posi
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned short> Logic::record(Device::Data device_data, int channel) {
+std::vector<unsigned short> wf::Logic::record(Device::Data device_data, int channel) {
     /*
         initialize the logic analyzer
 
@@ -135,7 +135,7 @@ std::vector<unsigned short> Logic::record(Device::Data device_data, int channel)
 
 /* ----------------------------------------------------- */
 
-void Logic::close(Device::Data device_data) {
+void wf::Logic::close(Device::Data device_data) {
     /*
         reset the instrument
     */
@@ -148,7 +148,7 @@ void Logic::close(Device::Data device_data) {
 
 /* ----------------------------------------------------- */
 
-int Logic::min(int a, int b) {
+int wf::Logic::min(int a, int b) {
     if (a < b) {
         return a;
     }
@@ -157,7 +157,7 @@ int Logic::min(int a, int b) {
 
 /* ----------------------------------------------------- */
 
-int Logic::max(int a, int b) {
+int wf::Logic::max(int a, int b) {
     if (a > b) {
         return a;
     }

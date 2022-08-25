@@ -1,4 +1,4 @@
-/* POWER SUPPLIES CONTROL FUNCTIONS: switch, switch_fixed, switch_variable, switch_digital, switch_6V, switch_25V, close */
+/* POWER SUPPLIES CONTROL FUNCTIONS: switch, close */
 
 /* include the necessary libraries */
 #include <string>
@@ -8,6 +8,7 @@
 
 #ifndef WF_SUPPLIES
 #define WF_SUPPLIES
+namespace wf {
 
 class Supplies {
     private:
@@ -52,4 +53,5 @@ class Supplies {
         void close(Device::Data device_data);
 } supplies;
 
+}
 #endif

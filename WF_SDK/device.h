@@ -10,6 +10,7 @@
 
 #ifndef WF_DEVICE
 #define WF_DEVICE
+namespace wf {
 
 class Device {
     // private class definitions
@@ -200,4 +201,5 @@ public:
     double temperature(Data device_data);
 } device;
 
+}
 #endif

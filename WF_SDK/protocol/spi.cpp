@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void SPI::open(Device::Data device_data, int cs, int sck, int miso, int mosi, double clk_frequency, int mode, bool order) {
+void wf::SPI::open(Device::Data device_data, int cs, int sck, int miso, int mosi, double clk_frequency, int mode, bool order) {
     /*
         initializes SPI communication
 
@@ -61,7 +61,7 @@ void SPI::open(Device::Data device_data, int cs, int sck, int miso, int mosi, do
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> SPI::read(Device::Data device_data, int count, int cs) {
+std::vector<unsigned char> wf::SPI::read(Device::Data device_data, int count, int cs) {
     /*
         receives data from SPI
 
@@ -88,7 +88,7 @@ std::vector<unsigned char> SPI::read(Device::Data device_data, int count, int cs
 
 /* ----------------------------------------------------- */
 
-void SPI::write(Device::Data device_data, std::string data, int cs) {
+void wf::SPI::write(Device::Data device_data, std::string data, int cs) {
     /*
         send data through SPI
 
@@ -107,7 +107,7 @@ void SPI::write(Device::Data device_data, std::string data, int cs) {
 
 /* ----------------------------------------------------- */
 
-void SPI::write(Device::Data device_data, std::vector<unsigned char> data, int cs) {
+void wf::SPI::write(Device::Data device_data, std::vector<unsigned char> data, int cs) {
     /*
         send data through SPI
 
@@ -128,7 +128,7 @@ void SPI::write(Device::Data device_data, std::vector<unsigned char> data, int c
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> SPI::exchange(Device::Data device_data, std::string tx_data, int count, int cs) {
+std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::string tx_data, int count, int cs) {
     /*
         sends and receives data using the SPI interface
         
@@ -149,7 +149,7 @@ std::vector<unsigned char> SPI::exchange(Device::Data device_data, std::string t
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> SPI::exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int cs) {
+std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int cs) {
     /*
         sends and receives data using the SPI interface
         
@@ -178,7 +178,7 @@ std::vector<unsigned char> SPI::exchange(Device::Data device_data, std::vector<u
 
 /* ----------------------------------------------------- */
 
-//spi_data SPI::spy(Device::Data device_data, int count, int cs, int sck, int mosi, int miso, int word_size) {
+//spi_data wf::SPI::spy(Device::Data device_data, int count, int cs, int sck, int mosi, int miso, int word_size) {
     /*
         receives data from SPI
 
@@ -289,7 +289,7 @@ std::vector<unsigned char> SPI::exchange(Device::Data device_data, std::vector<u
 
 /* ----------------------------------------------------- */
 
-void SPI::close(Device::Data device_data) {
+void wf::SPI::close(Device::Data device_data) {
     /*
         reset the spi interface
     */
@@ -301,7 +301,7 @@ void SPI::close(Device::Data device_data) {
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> SPI::convert(unsigned long long number) {
+std::vector<unsigned char> wf::SPI::convert(unsigned long long number) {
     /* convert a number to a byte array */
     int index = 0;
     std::vector<unsigned char> array;

@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void DMM::open(Device::Data device_data) {
+void wf::DMM::open(Device::Data device_data) {
     /*
         initialize the digital multimeter
     */
@@ -48,7 +48,7 @@ void DMM::open(Device::Data device_data) {
 
 /* ----------------------------------------------------- */
 
-double DMM::measure(Device::Data device_data, DwfDmm mode, double range, bool high_impedance) {
+double wf::DMM::measure(Device::Data device_data, DwfDmm mode, double range, bool high_impedance) {
     /*
         measure a voltage/current/resistance/continuity/temperature
 
@@ -95,7 +95,7 @@ double DMM::measure(Device::Data device_data, DwfDmm mode, double range, bool hi
 
 /* ----------------------------------------------------- */
 
-void DMM::close(Device::Data device_data) {
+void wf::DMM::close(Device::Data device_data) {
     /*
         reset the instrument
     */

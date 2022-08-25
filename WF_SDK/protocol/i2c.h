@@ -8,6 +8,7 @@
 
 #ifndef WF_PROTOCOL_I2C
 #define WF_PROTOCOL_I2C
+namespace wf {
 
 class I2C {
     private:
@@ -58,4 +59,5 @@ class I2C {
         void close(Device::Data device_data);
 } i2c;
 
+}
 #endif

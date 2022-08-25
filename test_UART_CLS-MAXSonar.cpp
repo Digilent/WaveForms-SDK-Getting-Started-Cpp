@@ -2,6 +2,8 @@
 #include <iostream>         // needed for input/output
 #include <sstream>          // needed for string manipulation
 
+using namespace wf;
+
 int reset = 2;      // define MAXSonar reset line
 int timeout = 1000; // define timeout iteration count
 

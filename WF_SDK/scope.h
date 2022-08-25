@@ -7,6 +7,7 @@
 
 #ifndef WF_SCOPE
 #define WF_SCOPE
+namespace wf {
 
 class Scope {
     private:
@@ -60,4 +61,5 @@ class Scope {
         void close(Device::Data device_data);
 } scope;
 
+}
 #endif

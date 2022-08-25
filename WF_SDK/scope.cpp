@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void Scope::open(Device::Data device_data, double sampling_frequency, int buffer_size, double offset, double amplitude_range) {
+void wf::Scope::open(Device::Data device_data, double sampling_frequency, int buffer_size, double offset, double amplitude_range) {
     /*
         initialize the oscilloscope
 
@@ -47,7 +47,7 @@ void Scope::open(Device::Data device_data, double sampling_frequency, int buffer
 
 /* ----------------------------------------------------- */
 
-double Scope::measure(Device::Data device_data, int channel) {
+double wf::Scope::measure(Device::Data device_data, int channel) {
     /*
         measure a voltage
 
@@ -70,7 +70,7 @@ double Scope::measure(Device::Data device_data, int channel) {
 
 /* ----------------------------------------------------- */
 
-void Scope::trigger(Device::Data device_data, bool enable, const TRIGSRC source, int channel, double timeout, bool edge_rising, double level) {
+void wf::Scope::trigger(Device::Data device_data, bool enable, const TRIGSRC source, int channel, double timeout, bool edge_rising, double level) {
     /*
         set up triggering
 
@@ -122,7 +122,7 @@ void Scope::trigger(Device::Data device_data, bool enable, const TRIGSRC source,
 
 /* ----------------------------------------------------- */
 
-std::vector<double> Scope::record(Device::Data device_data, int channel) {
+std::vector<double> wf::Scope::record(Device::Data device_data, int channel) {
     /*
         record an analog signal
 
@@ -154,7 +154,7 @@ std::vector<double> Scope::record(Device::Data device_data, int channel) {
 
 /* ----------------------------------------------------- */
 
-void Scope::close(Device::Data device_data) {
+void wf::Scope::close(Device::Data device_data) {
     /*
         reset the scope
     */
