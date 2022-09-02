@@ -16,7 +16,7 @@ class Tools {
     private:
         class Window {
             public:
-                const DwfWindow rectangula = DwfWindowRectangular;
+                const DwfWindow rectangular = DwfWindowRectangular;
                 const DwfWindow triangular = DwfWindowTriangular;
                 const DwfWindow hamming = DwfWindowHamming;
                 const DwfWindow hann = DwfWindowHann;
