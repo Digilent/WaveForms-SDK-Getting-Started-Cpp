@@ -22,6 +22,9 @@ void wf::Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutT
                     - trigger_source - possible: none, analog, digital, external[1-4]
                     - trigger_edge_rising - True means rising, False means falling, None means either, default is rising
     */
+    if (device_data.name == std::string("Digital Discovery")) {
+        channel = channel - 24;
+    }
     
     // get internal clock frequency
     double internal_frequency = 0;
@@ -139,6 +142,9 @@ void wf::Pattern::close(Device::Data device_data) {
 
 void wf::Pattern::enable(Device::Data device_data, int channel) {
     /* enables a digital output channel */
+    if (device_data.name == std::string("Digital Discovery")) {
+        channel = channel - 24;
+    }
     FDwfDigitalOutEnableSet(device_data.handle, channel, 1);
     FDwfDigitalOutConfigure(device_data.handle, true);
     state.on = true;
@@ -151,6 +157,9 @@ void wf::Pattern::enable(Device::Data device_data, int channel) {
 
 void wf::Pattern::disable(Device::Data device_data, int channel) {
     /* disables a digital output channel */
+    if (device_data.name == std::string("Digital Discovery")) {
+        channel = channel - 24;
+    }
     FDwfDigitalOutEnableSet(device_data.handle, channel, 0);
     FDwfDigitalOutConfigure(device_data.handle, true);
     state.channel[channel] = false;

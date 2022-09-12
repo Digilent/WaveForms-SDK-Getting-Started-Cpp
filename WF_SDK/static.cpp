@@ -13,6 +13,10 @@ void wf::Static::set_mode(Device::Data device_data, int channel, bool output) {
                     - selected DIO channel number
                     - True means output, False means input
     */
+    if (device_data.name == std::string("Digital Discovery")) {
+        channel = channel - 24;
+    }
+
     // count the DIO channels
     state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count);
 
@@ -45,6 +49,10 @@ bool wf::Static::get_state(Device::Data device_data, int channel) {
 
         returns:    - True if the channel is HIGH, or False, if the channel is LOW
     */
+    if (device_data.name == std::string("Digital Discovery")) {
+        channel = channel - 24;
+    }
+
     // load internal buffer with current state of the pins
     FDwfDigitalIOStatus(device_data.handle);
     
@@ -71,6 +79,10 @@ void wf::Static::set_state(Device::Data device_data, int channel, bool value) {
                     - selected DIO channel number
                     - True means HIGH, False means LOW
     */
+    if (device_data.name == std::string("Digital Discovery")) {
+        channel = channel - 24;
+    }
+
     // count the DIO channels
     state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count);
 
@@ -137,6 +149,10 @@ void wf::Static::set_pull(Device::Data device_data, int channel, double directio
                     - selected DIO channel number between 0-15
                     - direction: pull.up, pull.down, or pull.idle
     */
+    if (device_data.name == std::string("Digital Discovery")) {
+        channel = channel - 24;
+    }
+    
     // count the DIO channels
     state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count);
 
