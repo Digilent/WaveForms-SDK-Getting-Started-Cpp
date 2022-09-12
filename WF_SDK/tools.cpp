@@ -26,6 +26,20 @@ int wf::Tools::get_time(void) {
 
 /* ----------------------------------------------------- */
 
+std::string wf::Tools::get_date(void) {
+    time_t temp = time(0);
+    struct tm now = *localtime(&temp);
+    std::string date = std::to_string(now.tm_year + 1900) + "-" + 
+                       std::to_string(now.tm_mon + 1) + "-" + 
+                       std::to_string(now.tm_mday) + "-" + 
+                       std::to_string(now.tm_hour) + "-" + 
+                       std::to_string(now.tm_min) + "-" + 
+                       std::to_string(now.tm_sec);
+    return date;
+}
+
+/* ----------------------------------------------------- */
+
 void wf::Tools::keyboard_interrupt_reset(Device::Data device_data) {
     device_handle = device_data.handle;
     signal(SIGINT, ISR);

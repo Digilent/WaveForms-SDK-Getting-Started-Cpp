@@ -1,4 +1,5 @@
 #include <chrono>           // needed for sleep
+#include <time.h>           // needed for current time
 #include <signal.h>         // needed for keyboard interrupt
 #include <vector>           // needed for data list handling
 #include <cmath>            // needed for math functions
@@ -28,6 +29,7 @@ class Tools {
     public:
         Window window;
         int get_time(void);
+        std::string get_date(void);
         void sleep(int millis);
         void keyboard_interrupt_reset(Device::Data device_data);
         template <typename T>
