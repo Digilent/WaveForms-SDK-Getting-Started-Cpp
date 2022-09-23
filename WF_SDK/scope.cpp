@@ -19,13 +19,13 @@ void wf::Scope::open(Device::Data device_data, double sampling_frequency, int bu
     data.sampling_frequency = sampling_frequency;
     data.max_buffer_size = device_data.analog.input.max_buffer_size;
     // enable all channels
-    FDwfAnalogInChannelEnableSet(device_data.handle, 0, true);
+    FDwfAnalogInChannelEnableSet(device_data.handle, -1, true);
     
     // set offset voltage (in Volts)
-    FDwfAnalogInChannelOffsetSet(device_data.handle, 0, offset);
+    FDwfAnalogInChannelOffsetSet(device_data.handle, -1, offset);
     
     // set range (maximum signal amplitude in Volts)
-    FDwfAnalogInChannelRangeSet(device_data.handle, 0, amplitude_range);
+    FDwfAnalogInChannelRangeSet(device_data.handle, -1, amplitude_range);
     
     // set the buffer size (data point in a recording)
     if (buffer_size == 0 || buffer_size > data.max_buffer_size) {
