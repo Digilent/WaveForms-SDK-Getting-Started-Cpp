@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void wf::Static::set_mode(Device::Data device_data, int channel, bool output) {
+void wf::Static::set_mode(Device::Data *device_data, int channel, bool output) {
     /*
         set a DIO line as input, or as output
 
@@ -13,34 +13,38 @@ void wf::Static::set_mode(Device::Data device_data, int channel, bool output) {
                     - selected DIO channel number
                     - True means output, False means input
     */
-    if (device_data.name == std::string("Digital Discovery")) {
+    if (device_data->name == std::string("Digital Discovery")) {
         channel = channel - 24;
     }
 
     // count the DIO channels
-    state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count);
+    data.count = tools.min(device_data->digital.input.channel_count, device_data->digital.output.channel_count);
 
     // load current state of the output enable buffer
     unsigned int mask = 0;
-    FDwfDigitalIOOutputEnableGet(device_data.handle, &mask);
+    if (FDwfDigitalIOOutputEnableGet(device_data->handle, &mask) == 0) {
+        device.check_error(device_data);
+    }
     
     // set bit in mask
     if (output == true) {
-        mask |= rotate_left(1, channel, state.count);
+        mask |= rotate_left(1, channel, data.count);
     }
     else {
-        unsigned int bits = (unsigned int)pow(2, state.count) - 2;
-        mask &= rotate_left(bits, channel, state.count);
+        unsigned int bits = (unsigned int)pow(2, data.count) - 2;
+        mask &= rotate_left(bits, channel, data.count);
     }
     
     // set the pin to output
-    FDwfDigitalIOOutputEnableSet(device_data.handle, mask);
+    if (FDwfDigitalIOOutputEnableSet(device_data->handle, mask) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-bool wf::Static::get_state(Device::Data device_data, int channel) {
+bool wf::Static::get_state(Device::Data *device_data, int channel) {
     /*
         get the state of a DIO line
 
@@ -49,16 +53,20 @@ bool wf::Static::get_state(Device::Data device_data, int channel) {
 
         returns:    - True if the channel is HIGH, or False, if the channel is LOW
     */
-    if (device_data.name == std::string("Digital Discovery")) {
+    if (device_data->name == std::string("Digital Discovery")) {
         channel = channel - 24;
     }
 
     // load internal buffer with current state of the pins
-    FDwfDigitalIOStatus(device_data.handle);
+    if (FDwfDigitalIOStatus(device_data->handle) == 0) {
+        device.check_error(device_data);
+    }
     
     // get the current state of the pins
     unsigned int data = 0;  // variable for this current state
-    FDwfDigitalIOInputStatus(device_data.handle, &data);
+    if (FDwfDigitalIOInputStatus(device_data->handle, &data) == 0) {
+        device.check_error(device_data);
+    }
     
     // check the required bit
     if (data & (1 << channel) != 0) {
@@ -71,7 +79,7 @@ bool wf::Static::get_state(Device::Data device_data, int channel) {
 
 /* ----------------------------------------------------- */
 
-void wf::Static::set_state(Device::Data device_data, int channel, bool value) {
+void wf::Static::set_state(Device::Data *device_data, int channel, bool value) {
     /*
         set a DIO line as input, or as output
 
@@ -79,34 +87,38 @@ void wf::Static::set_state(Device::Data device_data, int channel, bool value) {
                     - selected DIO channel number
                     - True means HIGH, False means LOW
     */
-    if (device_data.name == std::string("Digital Discovery")) {
+    if (device_data->name == std::string("Digital Discovery")) {
         channel = channel - 24;
     }
 
     // count the DIO channels
-    state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count);
+    data.count = tools.min(device_data->digital.input.channel_count, device_data->digital.output.channel_count);
 
     // load current state of the output state buffer
     unsigned int mask = 0;
-    FDwfDigitalIOOutputGet(device_data.handle, &mask);
+    if (FDwfDigitalIOOutputGet(device_data->handle, &mask) == 0) {
+        device.check_error(device_data);
+    }
     
     // set bit in mask
     if (value == true) {
-        mask |= rotate_left(1, channel, state.count);
+        mask |= rotate_left(1, channel, data.count);
     }
     else {
-        unsigned int bits = (unsigned int)pow(2, state.count) - 2;
-        mask &= rotate_left(bits, channel, state.count);
+        unsigned int bits = (unsigned int)pow(2, data.count) - 2;
+        mask &= rotate_left(bits, channel, data.count);
     }
     
     // set the pin state
-    FDwfDigitalIOOutputSet(device_data.handle, mask);
+    if (FDwfDigitalIOOutputSet(device_data->handle, mask) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Static::set_current(Device::Data device_data, double current) {
+void wf::Static::set_current(Device::Data *device_data, double current) {
     /*
         limit the output current of the DIO lines
 
@@ -114,34 +126,36 @@ void wf::Static::set_current(Device::Data device_data, double current) {
                     - current limit in mA: possible values are 2, 4, 6, 8, 12 and 16mA
     */
     // search for the digital voltage channel
-    for (int channel_index = 0; channel_index < device_data.analog.IO.channel_count; channel_index++) {
-        if (device_data.analog.IO.channel_label[channel_index] == std::string("VDD")) {
-            state.channel = channel_index;
+    for (int channel_index = 0; channel_index < device_data->analog.IO.channel_count; channel_index++) {
+        if (device_data->analog.IO.channel_label[channel_index] == std::string("VDD")) {
+            data.channel = channel_index;
             break;
         }
     }
 
     // search for the drive node
-    if (state.channel >= 0) {
-        for (int node_index = 0; node_index < device_data.analog.IO.node_count[state.channel]; node_index++) {
-            if (device_data.analog.IO.node_name[state.channel][node_index] == std::string("Drive")) {
-                state.nodes.current = node_index;
+    if (data.channel >= 0) {
+        for (int node_index = 0; node_index < device_data->analog.IO.node_count[data.channel]; node_index++) {
+            if (device_data->analog.IO.node_name[data.channel][node_index] == std::string("Drive")) {
+                data.nodes.current = node_index;
                 break;
             }
         }
     }
 
     // set limit
-    if (state.channel >= 0 && state.nodes.current >= 0) {
-        current = max(min(current, device_data.analog.IO.max_set_range[state.channel][state.nodes.current]), device_data.analog.IO.min_set_range[state.channel][state.nodes.current]);
-        FDwfAnalogIOChannelNodeSet(device_data.handle, state.channel, state.nodes.current, current);
+    if (data.channel >= 0 && data.nodes.current >= 0) {
+        current = tools.max(tools.min(current, device_data->analog.IO.max_set_range[data.channel][data.nodes.current]), device_data->analog.IO.min_set_range[data.channel][data.nodes.current]);
+        if (FDwfAnalogIOChannelNodeSet(device_data->handle, data.channel, data.nodes.current, current) == 0) {
+            device.check_error(device_data);
+        }
     }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Static::set_pull(Device::Data device_data, int channel, double direction) {
+void wf::Static::set_pull(Device::Data *device_data, int channel, double direction) {
     /*
         pull a DIO line up, or down
 
@@ -149,46 +163,46 @@ void wf::Static::set_pull(Device::Data device_data, int channel, double directio
                     - selected DIO channel number between 0-15
                     - direction: pull.up, pull.down, or pull.idle
     */
-    if (device_data.name == std::string("Digital Discovery")) {
+    if (device_data->name == std::string("Digital Discovery")) {
         channel = channel - 24;
     }
     
     // count the DIO channels
-    state.count = min(device_data.digital.input.channel_count, device_data.digital.output.channel_count);
+    data.count = tools.min(device_data->digital.input.channel_count, device_data->digital.output.channel_count);
 
     // search for the digital voltage channel
-    for (int channel_index = 0; channel_index < device_data.analog.IO.channel_count; channel_index++) {
-        if (device_data.analog.IO.channel_label[channel_index] == std::string("VDD")) {
-            state.channel = channel_index;
+    for (int channel_index = 0; channel_index < device_data->analog.IO.channel_count; channel_index++) {
+        if (device_data->analog.IO.channel_label[channel_index] == std::string("VDD")) {
+            data.channel = channel_index;
             break;
         }
     }
     
     // search for the pull enable node
-    if (state.channel >= 0) {
-        for (int node_index = 0; node_index < device_data.analog.IO.node_count[state.channel]; node_index++) {
-            if (device_data.analog.IO.node_name[state.channel][node_index] == std::string("DIOPE")) {
-                state.nodes.pull_enable = node_index;
+    if (data.channel >= 0) {
+        for (int node_index = 0; node_index < device_data->analog.IO.node_count[data.channel]; node_index++) {
+            if (device_data->analog.IO.node_name[data.channel][node_index] == std::string("DIOPE")) {
+                data.nodes.pull_enable = node_index;
                 break;
             }
         }
     }
 
     // search for the pull direction node
-    if (state.channel >= 0) {
-        for (int node_index = 0; node_index < device_data.analog.IO.node_count[state.channel]; node_index++) {
-            if (device_data.analog.IO.node_name[state.channel][node_index] == std::string("DIOPP")) {
-                state.nodes.pull_direction = node_index;
+    if (data.channel >= 0) {
+        for (int node_index = 0; node_index < device_data->analog.IO.node_count[data.channel]; node_index++) {
+            if (device_data->analog.IO.node_name[data.channel][node_index] == std::string("DIOPP")) {
+                data.nodes.pull_direction = node_index;
                 break;
             }
         }
     }
 
     // search for the weak pull node
-    if (state.channel >= 0) {
-        for (int node_index = 0; node_index < device_data.analog.IO.node_count[state.channel]; node_index++) {
-            if (device_data.analog.IO.node_name[state.channel][node_index] == std::string("DINPP")) {
-                state.nodes.pull_weak = node_index;
+    if (data.channel >= 0) {
+        for (int node_index = 0; node_index < device_data->analog.IO.node_count[data.channel]; node_index++) {
+            if (device_data->analog.IO.node_name[data.channel][node_index] == std::string("DINPP")) {
+                data.nodes.pull_weak = node_index;
                 break;
             }
         }
@@ -196,42 +210,52 @@ void wf::Static::set_pull(Device::Data device_data, int channel, double directio
 
     // set pull enable mask
     double mask = 0;
-    FDwfAnalogIOChannelNodeGet(device_data.handle, state.channel, state.nodes.pull_enable, &mask);
+    if (FDwfAnalogIOChannelNodeGet(device_data->handle, data.channel, data.nodes.pull_enable, &mask) == 0) {
+        device.check_error(device_data);
+    }
     unsigned int bitmask = (unsigned int)(mask);
     if (direction == pull.idle) {
-        bitmask |= rotate_left(1, channel, state.count);
+        bitmask |= rotate_left(1, channel, data.count);
     }
     else {
-        unsigned int bits = (unsigned int)pow(2, state.count) - 2;
-        bitmask &= rotate_left(bits, channel, state.count);
+        unsigned int bits = (unsigned int)pow(2, data.count) - 2;
+        bitmask &= rotate_left(bits, channel, data.count);
     }
-    FDwfAnalogIOChannelNodeSet(device_data.handle, state.channel, state.nodes.pull_enable, bitmask);
+    if (FDwfAnalogIOChannelNodeSet(device_data->handle, data.channel, data.nodes.pull_enable, bitmask) == 0) {
+        device.check_error(device_data);
+    }
 
     // set direction if necessary
     if (direction != pull.idle) {
         // set direction mask
         mask = 0;
-        FDwfAnalogIOChannelNodeGet(device_data.handle, state.channel, state.nodes.pull_direction, &mask);
+        if (FDwfAnalogIOChannelNodeGet(device_data->handle, data.channel, data.nodes.pull_direction, &mask) == 0) {
+            device.check_error(device_data);
+        }
         bitmask = (unsigned int)(mask);
         if (direction == pull.up) {
-            bitmask |= rotate_left(1, channel, state.count);
+            bitmask |= rotate_left(1, channel, data.count);
         }
         else {
-            unsigned int bits = (unsigned int)pow(2, state.count) - 2;
-            bitmask &= rotate_left(bits, channel, state.count);
+            unsigned int bits = (unsigned int)pow(2, data.count) - 2;
+            bitmask &= rotate_left(bits, channel, data.count);
         }
-        FDwfAnalogIOChannelNodeSet(device_data.handle, state.channel, state.nodes.pull_direction, bitmask);
+        if (FDwfAnalogIOChannelNodeSet(device_data->handle, data.channel, data.nodes.pull_direction, bitmask) == 0) {
+            device.check_error(device_data);
+        }
     }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Static::close(Device::Data device_data) {
+void wf::Static::close(Device::Data *device_data) {
     /*
         reset the instrument
     */
-    FDwfDigitalIOReset(device_data.handle);
+    if (FDwfDigitalIOReset(device_data->handle) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 

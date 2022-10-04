@@ -35,30 +35,14 @@ class Scope {
                 }
         };
 
-        class State {
-            public:
-                bool on = false;
-                bool off = true;
-                bool trigger = false;
-                State& operator=(const State &data) {
-                    if (this != &data) {
-                        on = data.on;
-                        off = data.off;
-                        trigger = data.trigger;
-                    }
-                    return *this;
-                }
-        };
-
     public:
         Trigger_Source trigger_source;
         Data data;
-        State state;
-        void open(Device::Data device_data, double sampling_frequency = 20e06, int buffer_size = 0, double offset = 0, double amplitude_range = 5);
-        double measure(Device::Data device_data, int channel);
-        void trigger(Device::Data device_data, bool enable, const TRIGSRC source = trigsrcNone, int channel = 1, double timeout = 0, bool edge_rising = true, double level = 0);
-        std::vector<double> record(Device::Data device_data, int channel);
-        void close(Device::Data device_data);
+        void open(Device::Data *device_data, double sampling_frequency = 20e06, int buffer_size = 0, double offset = 0, double amplitude_range = 5);
+        double measure(Device::Data *device_data, int channel);
+        void trigger(Device::Data *device_data, bool enable, const TRIGSRC source = trigsrcNone, int channel = 1, double timeout = 0, bool edge_rising = true, double level = 0);
+        std::vector<double> record(Device::Data *device_data, int channel);
+        void close(Device::Data *device_data);
 } scope;
 
 }

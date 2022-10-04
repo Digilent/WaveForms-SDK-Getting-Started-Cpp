@@ -40,8 +40,8 @@ std::string wf::Tools::get_date(void) {
 
 /* ----------------------------------------------------- */
 
-void wf::Tools::keyboard_interrupt_reset(Device::Data device_data) {
-    device_handle = device_data.handle;
+void wf::Tools::keyboard_interrupt_reset(Device::Data *device_data) {
+    device_handle = device_data->handle;
     signal(SIGINT, ISR);
     return;
 }

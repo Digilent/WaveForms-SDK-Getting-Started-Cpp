@@ -27,28 +27,12 @@ class Wavegen {
                 const FUNC ramp_down = funcRampDown;
         };
 
-        class State {
-            public:
-                bool on = false;
-                bool off = true;
-                std::vector<bool> channel{false, false};
-                State& operator=(const State &data) {
-                    if (this != &data) {
-                        on = data.on;
-                        off = data.off;
-                        channel = data.channel;
-                    }
-                    return *this;
-                }
-        };
-
     public:
         Function function;
-        State state;
-        void generate(Device::Data device_data, int channel, FUNC function, double offset, double frequency = 1e03, double amplitude = 1, double symmetry = 50, double wait = 0, double run_time = 0, int repeat = 0, std::vector<double> data = std::vector<double>());
-        void close(Device::Data device_data, int channel = 0);
-        void enable(Device::Data device_data, int channel);
-        void disable(Device::Data device_data, int channel);
+        void generate(Device::Data *device_data, int channel, FUNC function, double offset, double frequency = 1e03, double amplitude = 1, double symmetry = 50, double wait = 0, double run_time = 0, int repeat = 0, std::vector<double> data = std::vector<double>());
+        void close(Device::Data *device_data, int channel = 0);
+        void enable(Device::Data *device_data, int channel);
+        void disable(Device::Data *device_data, int channel);
 } wavegen;
 
 }

@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-wf::Device::Data wf::Device::open(std::string device, int config) {
+wf::Device::Data* wf::Device::open(std::string device, int config) {
     /*
         open a specific device
 
@@ -17,7 +17,7 @@ wf::Device::Data wf::Device::open(std::string device, int config) {
         returns:    - device data
     */
 
-    Data device_data;
+    Data *device_data = new Data();
 
     std::map<std::string, int> device_names;
     device_names["Analog Discovery"] = devidDiscovery;
@@ -42,28 +42,30 @@ wf::Device::Data wf::Device::open(std::string device, int config) {
 
     // check for connected devices
     if (device_count <= 0) {
+        device_data->error.instrument = "device";
+        device_data->error.function = "open";
         if (device_type == 0) {
-            std::cout << "Error: There are no connected devices" << std::endl;
+            device_data->error.message = "There are no connected devices";
         }
         else {
-            std::cout << "Error: There is no " << device << " connected" << std::endl;
+            device_data->error.message = "There is no " + device + " connected";
         }
-        throw std::exception();
+        throw device_data->error;
     }
 
     // this is the device handle - it will be used by all functions to "address" the connected device
-    device_data.handle = 0;
+    device_data->handle = 0;
 
     // connect to the first available device
     HDWF index = 0;
-    while (device_data.handle == 0 && index < device_count) {
-        FDwfDeviceConfigOpen(index, config, &device_data.handle);
+    while (device_data->handle == 0 && index < device_count) {
+        FDwfDeviceConfigOpen(index, config, &device_data->handle);
         index++;    // increment the index and try again if the device is busy
     }
 
     // check connected device type
-    device_data.name = "";
-    if (device_data.handle != 0) {
+    device_data->name = "";
+    if (device_data->handle != 0) {
         int device_id = 0;
         int device_rev = 0;
         FDwfEnumDeviceType(index - 1, &device_id, &device_rev);
@@ -71,70 +73,87 @@ wf::Device::Data wf::Device::open(std::string device, int config) {
         // decode device id
         for (std::map<std::string, int>::iterator pair = device_names.begin(); pair != device_names.end(); ++pair) {
             if (device_id == pair->second) {
-                device_data.name = pair->first;
+                device_data->name = pair->first;
                 break;
             }
         }
     }
 
-    // set global data
-    get_info(&device_data);
-    state.connected = true;
-    state.disconnected = false;
-    return device_data;
-}
-
-/* ----------------------------------------------------- */
-
-void wf::Device::check_error(Data device_data) {
-    /*
-        check for connection errors
-    */
+    // check for errors
     // if the device handle is empty after a connection attempt
-    if (device_data.handle == hdwfNone) {
+    if (device_data->handle == hdwfNone) {
         // check for errors
         int err_nr = 0; // variable for error number
         FDwfGetLastError(&err_nr);  // get error number
 
         // if there is an error
         if (err_nr != dwfercNoErc) {
-            // display it and quit
-            char err_msg[512];  // variable for the error message
-            FDwfGetLastErrorMsg(err_msg);  // get the error message
-            std::cout << "Error: " << err_msg << std::endl;   // display error message
-            state.error = err_msg;
-            state.connected = false;
-            state.disconnected = true;
-            throw std::exception();  // exit the program
+            // check the error message
+            check_error(device_data);
         }
+    }
+
+    // set global data
+    get_info(device_data);
+    return device_data;
+}
+
+/* ----------------------------------------------------- */
+
+void wf::Device::check_error(Data *device_data, const char *caller, const char *file) {
+    /*
+        check for errors
+    */
+    char err_msg[512];  // variable for the error message
+    FDwfGetLastErrorMsg(err_msg);  // get the error message
+    device_data->error.message = err_msg;   // cast it to string
+    if (device_data->error.message != "") {
+        device_data->error.function = caller;
+        device_data->error.instrument = file;
+        // delete the extension
+        size_t index = device_data->error.instrument.find('.');
+        if (index != std::string::npos) {
+            device_data->error.instrument = device_data->error.instrument.substr(0, index);
+        }
+        // delete the path
+        device_data->error.instrument = std::string(device_data->error.instrument.rbegin(), device_data->error.instrument.rend());
+        index = device_data->error.instrument.find('/');
+        if (index != std::string::npos) {
+            device_data->error.instrument = device_data->error.instrument.substr(0, index);
+        }
+        index = device_data->error.instrument.find('\\');
+        if (index != std::string::npos) {
+            device_data->error.instrument = device_data->error.instrument.substr(0, index);
+        }
+        device_data->error.instrument = std::string(device_data->error.instrument.rbegin(), device_data->error.instrument.rend());
+        throw device_data->error;
     }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Device::close(Data device_data) {
+void wf::Device::close(Data *device_data) {
     /*
         close a specific device
     */
-    FDwfDeviceClose(device_data.handle);
-    device_data.handle = 0;
-    device_data.name = "";
-    state.connected = false;
-    state.disconnected = true;
+    if (device_data->handle != 0) {
+        FDwfDeviceClose(device_data->handle);
+    }
+    delete device_data;
     return;
 }
 
 /* ----------------------------------------------------- */
 
-double wf::Device::temperature(Data device_data) {
+double wf::Device::temperature(Data *device_data) {
     /*
         return the board temperature
     */
     // find the system monitor
     int channel = -1;
-    for (int channel_index = 0; channel_index < device_data.analog.IO.channel_count; channel_index++) {
-        if (device_data.analog.IO.channel_label[channel_index] == "System") {
+    for (int channel_index = 0; channel_index < device_data->analog.IO.channel_count; channel_index++) {
+        if (device_data->analog.IO.channel_label[channel_index] == "System") {
             channel = channel_index;
             break;
         }
@@ -145,8 +164,8 @@ double wf::Device::temperature(Data device_data) {
 
     // find the temperature node
     int node = -1;
-    for (int node_index = 0; node_index < device_data.analog.IO.node_count[channel]; node_index++) {
-        if (device_data.analog.IO.node_name[channel][node_index] == "Temp") {
+    for (int node_index = 0; node_index < device_data->analog.IO.node_count[channel]; node_index++) {
+        if (device_data->analog.IO.node_name[channel][node_index] == "Temp") {
             node = node_index;
             break;
         }
@@ -156,9 +175,13 @@ double wf::Device::temperature(Data device_data) {
     }
 
     // read the temperature
-    FDwfAnalogIOStatus(device_data.handle);
+    if (FDwfAnalogIOStatus(device_data->handle) == 0) {
+        check_error(device_data);
+    }
     double temperature = 0;
-    FDwfAnalogIOChannelNodeStatus(device_data.handle, channel, node, &temperature);
+    if (FDwfAnalogIOChannelNodeStatus(device_data->handle, channel, node, &temperature) == 0) {
+        check_error(device_data);
+    }
     return temperature;
 }
 
@@ -171,29 +194,45 @@ void wf::Device::get_info(Data* device_data) {
 
     // check WaveForms version
     char version[16];
-    FDwfGetVersion(version);
+    if (FDwfGetVersion(version) == 0) {
+        check_error(device_data);
+    }
     device_data->version = std::string(version);
 
     // analog input information
     // channel count
     int handle = device_data->handle;
-    FDwfAnalogInChannelCount(handle, &device_data->analog.input.channel_count);
+    if (FDwfAnalogInChannelCount(handle, &device_data->analog.input.channel_count) == 0) {
+        check_error(device_data);
+    }
     // buffer size
-    FDwfAnalogInBufferSizeInfo(handle, 0, &device_data->analog.input.max_buffer_size);
+    if (FDwfAnalogInBufferSizeInfo(handle, 0, &device_data->analog.input.max_buffer_size) == 0) {
+        check_error(device_data);
+    }
     // ADC resolution
-    FDwfAnalogInBitsInfo(handle, &device_data->analog.input.max_resolution);
+    if (FDwfAnalogInBitsInfo(handle, &device_data->analog.input.max_resolution) == 0) {
+        check_error(device_data);
+    }
     // range information
-    FDwfAnalogInChannelRangeInfo(handle, &device_data->analog.input.min_range, &device_data->analog.input.max_range, &device_data->analog.input.steps_range);
+    if (FDwfAnalogInChannelRangeInfo(handle, &device_data->analog.input.min_range, &device_data->analog.input.max_range, &device_data->analog.input.steps_range) == 0) {
+        check_error(device_data);
+    }
     // offset information
-    FDwfAnalogInChannelOffsetInfo(handle, &device_data->analog.input.min_offset, &device_data->analog.input.max_offset, &device_data->analog.input.steps_offset);
+    if (FDwfAnalogInChannelOffsetInfo(handle, &device_data->analog.input.min_offset, &device_data->analog.input.max_offset, &device_data->analog.input.steps_offset) == 0) {
+        check_error(device_data);
+    }
 
     // analog output information
     // channel count
-    FDwfAnalogOutCount(handle, &device_data->analog.output.channel_count);
+    if (FDwfAnalogOutCount(handle, &device_data->analog.output.channel_count) == 0) {
+        check_error(device_data);
+    }
     for (int channel_index = 0; channel_index < device_data->analog.output.channel_count; channel_index++) {
         // check node types and count
         int temp1;
-        FDwfAnalogOutNodeInfo(handle, channel_index, &temp1);
+        if (FDwfAnalogOutNodeInfo(handle, channel_index, &temp1) == 0) {
+            check_error(device_data);
+        }
         std::vector<std::string> templist1;
         for (int node_index = 0; node_index < 3; node_index++) {
             if (((1 << node_index) & temp1) == 0) {
@@ -214,7 +253,9 @@ void wf::Device::get_info(Data* device_data) {
         // buffer size
         std::vector<int> templist2;
         for (int node_index = 0; node_index < device_data->analog.output.node_count[channel_index]; node_index++) {
-            FDwfAnalogOutNodeDataInfo(handle, channel_index, node_index, 0, &temp1);
+            if (FDwfAnalogOutNodeDataInfo(handle, channel_index, node_index, 0, &temp1) == 0) {
+                check_error(device_data);
+            }
             templist2.insert(templist2.end(), temp1);
         }
         device_data->analog.output.max_buffer_size.insert(device_data->analog.output.max_buffer_size.end(), templist2);
@@ -222,7 +263,9 @@ void wf::Device::get_info(Data* device_data) {
         std::vector<double> templist3, templist4;
         double temp3, temp4;
         for (int node_index = 0; node_index < device_data->analog.output.node_count[channel_index]; node_index++) {
-            FDwfAnalogOutNodeAmplitudeInfo(handle, channel_index, node_index, &temp3, &temp4);
+            if (FDwfAnalogOutNodeAmplitudeInfo(handle, channel_index, node_index, &temp3, &temp4) == 0) {
+                check_error(device_data);
+            }
             templist3.insert(templist3.end(), temp3);
             templist4.insert(templist4.end(), temp4);
         }
@@ -232,7 +275,9 @@ void wf::Device::get_info(Data* device_data) {
         templist3.clear();
         templist4.clear();
         for (int node_index = 0; node_index < device_data->analog.output.node_count[channel_index]; node_index++) {
-            FDwfAnalogOutNodeOffsetInfo(handle, channel_index, node_index, &temp3, &temp4);
+            if (FDwfAnalogOutNodeOffsetInfo(handle, channel_index, node_index, &temp3, &temp4) == 0) {
+                check_error(device_data);
+            }
             templist3.insert(templist3.end(), temp3);
             templist4.insert(templist4.end(), temp4);
         }
@@ -242,7 +287,9 @@ void wf::Device::get_info(Data* device_data) {
         templist3.clear();
         templist4.clear();
         for (int node_index = 0; node_index < device_data->analog.output.node_count[channel_index]; node_index++) {
-            FDwfAnalogOutNodeFrequencyInfo(handle, channel_index, node_index, &temp3, &temp4);
+            if (FDwfAnalogOutNodeFrequencyInfo(handle, channel_index, node_index, &temp3, &temp4) == 0) {
+                check_error(device_data);
+            }
             templist3.insert(templist3.end(), temp3);
             templist4.insert(templist4.end(), temp4);
         }
@@ -252,22 +299,30 @@ void wf::Device::get_info(Data* device_data) {
 
     // analog IO information
     // channel count
-    FDwfAnalogIOChannelCount(handle, &device_data->analog.IO.channel_count);
+    if (FDwfAnalogIOChannelCount(handle, &device_data->analog.IO.channel_count) == 0) {
+        check_error(device_data);
+    }
     for (int channel_index = 0; channel_index < device_data->analog.IO.channel_count; channel_index++) {
         // channel names and labels
         char temp1[256];
         char temp2[256];
-        FDwfAnalogIOChannelName(handle, channel_index, temp1, temp2);
+        if (FDwfAnalogIOChannelName(handle, channel_index, temp1, temp2) == 0) {
+            check_error(device_data);
+        }
         device_data->analog.IO.channel_name.insert(device_data->analog.IO.channel_name.end(), std::string(temp1));
         device_data->analog.IO.channel_label.insert(device_data->analog.IO.channel_label.end(), std::string(temp2));
         // node count
         int temp3;
-        FDwfAnalogIOChannelInfo(handle, channel_index, &temp3);
+        if (FDwfAnalogIOChannelInfo(handle, channel_index, &temp3) == 0) {
+            check_error(device_data);
+        }
         device_data->analog.IO.node_count.insert(device_data->analog.IO.node_count.end(), temp3);
         // node names and units
         std::vector<std::string> templist1, templist2;
         for (int node_index = 0; node_index < device_data->analog.IO.node_count[channel_index]; node_index++) {
-            FDwfAnalogIOChannelNodeName(handle, channel_index, node_index, temp1, temp2);
+            if (FDwfAnalogIOChannelNodeName(handle, channel_index, node_index, temp1, temp2) == 0) {
+                check_error(device_data);
+            }
             templist1.insert(templist1.end(), temp1);
             templist2.insert(templist2.end(), temp2);
         }
@@ -278,7 +333,9 @@ void wf::Device::get_info(Data* device_data) {
         std::vector<int> templist3;
         std::vector<double> templist4, templist5;
         for (int node_index = 0; node_index < device_data->analog.IO.node_count[channel_index]; node_index++) {
-            FDwfAnalogIOChannelNodeSetInfo(handle, channel_index, node_index, &temp4, &temp5, &temp3);
+            if (FDwfAnalogIOChannelNodeSetInfo(handle, channel_index, node_index, &temp4, &temp5, &temp3) == 0) {
+                check_error(device_data);
+            }
             templist3.insert(templist3.end(), temp3);
             templist4.insert(templist4.end(), temp4);
             templist5.insert(templist5.end(), temp5);
@@ -291,7 +348,9 @@ void wf::Device::get_info(Data* device_data) {
         templist4.clear();
         templist5.clear();
         for (int node_index = 0; node_index < device_data->analog.IO.node_count[channel_index]; node_index++) {
-            FDwfAnalogIOChannelNodeStatusInfo(handle, channel_index, node_index, &temp4, &temp5, &temp3);
+            if (FDwfAnalogIOChannelNodeStatusInfo(handle, channel_index, node_index, &temp4, &temp5, &temp3) == 0) {
+                check_error(device_data);
+            }
             templist3.insert(templist3.end(), temp3);
             templist4.insert(templist4.end(), temp4);
             templist5.insert(templist5.end(), temp5);
@@ -303,16 +362,24 @@ void wf::Device::get_info(Data* device_data) {
 
     // digital input information
     // channel count
-    FDwfDigitalInBitsInfo(handle, &device_data->digital.input.channel_count);
+    if (FDwfDigitalInBitsInfo(handle, &device_data->digital.input.channel_count) == 0) {
+        check_error(device_data);
+    }
     // buffer size
-    FDwfDigitalInBufferSizeInfo(handle, &device_data->digital.input.max_buffer_size);
+    if (FDwfDigitalInBufferSizeInfo(handle, &device_data->digital.input.max_buffer_size) == 0) {
+        check_error(device_data);
+    }
 
     // digital output information
     // channel count
-    FDwfDigitalOutCount(handle, &device_data->digital.output.channel_count);
+    if (FDwfDigitalOutCount(handle, &device_data->digital.output.channel_count) == 0) {
+        check_error(device_data);
+    }
     // buffer size
     unsigned int temp;
-    FDwfDigitalOutDataInfo(handle, 0, &temp);
+    if (FDwfDigitalOutDataInfo(handle, 0, &temp) == 0) {
+        check_error(device_data);
+    }
     device_data->digital.output.max_buffer_size = (int)temp;
 
     return;

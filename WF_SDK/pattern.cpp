@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void wf::Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutType function, double frequency, double duty_cycle, std::vector<unsigned short> data, double wait, int repeat, int run_time, DwfDigitalOutIdle idle, bool trigger_enabled, TRIGSRC trigger_source, bool trigger_edge_rising) {
+void wf::Pattern::generate(Device::Data *device_data, int channel, DwfDigitalOutType function, double frequency, double duty_cycle, std::vector<unsigned short> data, double wait, int repeat, int run_time, DwfDigitalOutIdle idle, bool trigger_enabled, TRIGSRC trigger_source, bool trigger_edge_rising) {
     /*
         generate a logic signal
         
@@ -22,17 +22,21 @@ void wf::Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutT
                     - trigger_source - possible: none, analog, digital, external[1-4]
                     - trigger_edge_rising - True means rising, False means falling, None means either, default is rising
     */
-    if (device_data.name == std::string("Digital Discovery")) {
+    if (device_data->name == std::string("Digital Discovery")) {
         channel = channel - 24;
     }
     
     // get internal clock frequency
     double internal_frequency = 0;
-    FDwfDigitalOutInternalClockInfo(device_data.handle, &internal_frequency);
+    if (FDwfDigitalOutInternalClockInfo(device_data->handle, &internal_frequency) == 0) {
+        device.check_error(device_data);
+    }
     
     // get counter value range
     unsigned int counter_limit = 0;
-    FDwfDigitalOutCounterInfo(device_data.handle, 0, 0, &counter_limit);
+    if (FDwfDigitalOutCounterInfo(device_data->handle, 0, 0, &counter_limit) == 0) {
+        device.check_error(device_data);
+    }
     
     // calculate the divider for the given signal frequency
     int divider;
@@ -44,48 +48,72 @@ void wf::Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutT
     }
     
     // enable the respective channel
-    FDwfDigitalOutEnableSet(device_data.handle, channel, 1);
+    if (FDwfDigitalOutEnableSet(device_data->handle, channel, 1) == 0) {
+        device.check_error(device_data);
+    }
     
     // set output type
-    FDwfDigitalOutTypeSet(device_data.handle, channel, function);
+    if (FDwfDigitalOutTypeSet(device_data->handle, channel, function) == 0) {
+        device.check_error(device_data);
+    }
     
     // set frequency
-    FDwfDigitalOutDividerSet(device_data.handle, channel, divider);
+    if (FDwfDigitalOutDividerSet(device_data->handle, channel, divider) == 0) {
+        device.check_error(device_data);
+    }
 
     // set idle state
-    FDwfDigitalOutIdleSet(device_data.handle, channel, idle);
+    if (FDwfDigitalOutIdleSet(device_data->handle, channel, idle) == 0) {
+        device.check_error(device_data);
+    }
 
     // calculate run length
     if (run_time < 0) {
         run_time = data.size() / frequency;
     }
-    FDwfDigitalOutRunSet(device_data.handle, run_time);
+    if (FDwfDigitalOutRunSet(device_data->handle, run_time) == 0) {
+        device.check_error(device_data);
+    }
     
     // set wait time
-    FDwfDigitalOutWaitSet(device_data.handle, wait);
+    if (FDwfDigitalOutWaitSet(device_data->handle, wait) == 0) {
+        device.check_error(device_data);
+    }
     
     // set repeat count
-    FDwfDigitalOutRepeatSet(device_data.handle, repeat);
+    if (FDwfDigitalOutRepeatSet(device_data->handle, repeat) == 0) {
+        device.check_error(device_data);
+    }
     
     // enable triggering
-    FDwfDigitalOutRepeatTriggerSet(device_data.handle, int(trigger_enabled));
+    if (FDwfDigitalOutRepeatTriggerSet(device_data->handle, int(trigger_enabled)) == 0) {
+        device.check_error(device_data);
+    }
     
     if (trigger_enabled == true) {
         // set trigger source
-        FDwfDigitalOutTriggerSourceSet(device_data.handle, trigger_source);
+        if (FDwfDigitalOutTriggerSourceSet(device_data->handle, trigger_source) == 0) {
+            device.check_error(device_data);
+        }
     
         // set trigger slope
         if (trigger_edge_rising == true) {
             // rising edge
-            FDwfDigitalOutTriggerSlopeSet(device_data.handle, DwfTriggerSlopeRise);
+            if (FDwfDigitalOutTriggerSlopeSet(device_data->handle, DwfTriggerSlopeRise) == 0) {
+                device.check_error(device_data);
+            }
         }
         else if (trigger_edge_rising == false) {
             // falling edge
-            FDwfDigitalOutTriggerSlopeSet(device_data.handle, DwfTriggerSlopeFall);
+            if (FDwfDigitalOutTriggerSlopeSet(device_data->handle, DwfTriggerSlopeFall) == 0) {
+                device.check_error(device_data);
+            }
         }
         else {
             // either edge
-            FDwfDigitalOutTriggerSlopeSet(device_data.handle, DwfTriggerSlopeEither);
+            if (FDwfDigitalOutTriggerSlopeSet(device_data->handle, DwfTriggerSlopeEither) == 0) {
+                device.check_error(device_data);
+            }
         }
     }
 
@@ -96,7 +124,9 @@ void wf::Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutT
         // calculate steps for low and high parts of the period
         int high_steps = int(steps * duty_cycle / 100);
         int low_steps = steps - high_steps;
-        FDwfDigitalOutCounterSet(device_data.handle, channel, low_steps, high_steps);
+        if (FDwfDigitalOutCounterSet(device_data->handle, channel, low_steps, high_steps) == 0) {
+            device.check_error(device_data);
+        }
     }
     
     // load custom signal data
@@ -112,56 +142,58 @@ void wf::Pattern::generate(Device::Data device_data, int channel, DwfDigitalOutT
         }
     
         // load data
-        FDwfDigitalOutDataSet(device_data.handle, channel, buffer.data(), buffer.size());
+        if (FDwfDigitalOutDataSet(device_data->handle, channel, buffer.data(), buffer.size()) == 0) {
+            device.check_error(device_data);
+        }
     }
     
     // start generating the signal
-    FDwfDigitalOutConfigure(device_data.handle, true);
-    state.on = true;
-    state.off = false;
-    state.channel[channel] = true;
+    if (FDwfDigitalOutConfigure(device_data->handle, true) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Pattern::close(Device::Data device_data) {
+void wf::Pattern::close(Device::Data *device_data) {
     /*
         reset the instrument
     */
-    FDwfDigitalOutReset(device_data.handle);
-    state.on = false;
-    state.off = true;
-    for (int index = 0; index < state.channel.size(); index++) {
-        state.channel[index] = false;
+    if (FDwfDigitalOutReset(device_data->handle) == 0) {
+        device.check_error(device_data);
     }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Pattern::enable(Device::Data device_data, int channel) {
+void wf::Pattern::enable(Device::Data *device_data, int channel) {
     /* enables a digital output channel */
-    if (device_data.name == std::string("Digital Discovery")) {
+    if (device_data->name == std::string("Digital Discovery")) {
         channel = channel - 24;
     }
-    FDwfDigitalOutEnableSet(device_data.handle, channel, 1);
-    FDwfDigitalOutConfigure(device_data.handle, true);
-    state.on = true;
-    state.off = false;
-    state.channel[channel] = true;
+    if (FDwfDigitalOutEnableSet(device_data->handle, channel, 1) == 0) {
+        device.check_error(device_data);
+    }
+    if (FDwfDigitalOutConfigure(device_data->handle, true) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Pattern::disable(Device::Data device_data, int channel) {
+void wf::Pattern::disable(Device::Data *device_data, int channel) {
     /* disables a digital output channel */
-    if (device_data.name == std::string("Digital Discovery")) {
+    if (device_data->name == std::string("Digital Discovery")) {
         channel = channel - 24;
     }
-    FDwfDigitalOutEnableSet(device_data.handle, channel, 0);
-    FDwfDigitalOutConfigure(device_data.handle, true);
-    state.channel[channel] = false;
+    if (FDwfDigitalOutEnableSet(device_data->handle, channel, 0) == 0) {
+        device.check_error(device_data);
+    }
+    if (FDwfDigitalOutConfigure(device_data->handle, true) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }

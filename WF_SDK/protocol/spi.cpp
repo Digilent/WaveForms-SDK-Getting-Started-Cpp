@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void wf::SPI::open(Device::Data device_data, int cs, int sck, int miso, int mosi, double clk_frequency, int mode, bool order) {
+void wf::SPI::open(Device::Data *device_data, int cs, int sck, int miso, int mosi, double clk_frequency, int mode, bool order) {
     /*
         initializes SPI communication
 
@@ -19,49 +19,64 @@ void wf::SPI::open(Device::Data device_data, int cs, int sck, int miso, int mosi
                     - order (endianness, True means MSB first - default, False means LSB first)
     */
     // set the clock frequency
-    FDwfDigitalSpiFrequencySet(device_data.handle, clk_frequency);
+    if (FDwfDigitalSpiFrequencySet(device_data->handle, clk_frequency) == 0) {
+        device.check_error(device_data);
+    }
 
     // set the clock pin
-    FDwfDigitalSpiClockSet(device_data.handle, sck);
+    if (FDwfDigitalSpiClockSet(device_data->handle, sck) == 0) {
+        device.check_error(device_data);
+    }
 
     if (mosi != -1) {
         // set the mosi pin
-        FDwfDigitalSpiDataSet(device_data.handle, 0, mosi);
+        if (FDwfDigitalSpiDataSet(device_data->handle, 0, mosi) == 0) {
+            device.check_error(device_data);
+        }
 
         // set the initial state
-        FDwfDigitalSpiIdleSet(device_data.handle, 0, DwfDigitalOutIdleZet);
+        if (FDwfDigitalSpiIdleSet(device_data->handle, 0, DwfDigitalOutIdleZet) == 0) {
+            device.check_error(device_data);
+        }
     }
 
     if (miso != -1) {
         // set the miso pin
-        FDwfDigitalSpiDataSet(device_data.handle, 1, miso);
+        if (FDwfDigitalSpiDataSet(device_data->handle, 1, miso) == 0) {
+            device.check_error(device_data);
+        }
 
         // set the initial state
-        FDwfDigitalSpiIdleSet(device_data.handle, 1, DwfDigitalOutIdleZet);
+        if (FDwfDigitalSpiIdleSet(device_data->handle, 1, DwfDigitalOutIdleZet) == 0) {
+            device.check_error(device_data);
+        }
     }
 
     // set the SPI mode
-    FDwfDigitalSpiModeSet(device_data.handle, mode);
+    if (FDwfDigitalSpiModeSet(device_data->handle, mode) == 0) {
+        device.check_error(device_data);
+    }
 
     // set endianness
-    FDwfDigitalSpiOrderSet(device_data.handle, int(order));
+    if (FDwfDigitalSpiOrderSet(device_data->handle, int(order)) == 0) {
+        device.check_error(device_data);
+    }
 
     // set the cs pin HIGH
-    FDwfDigitalSpiSelect(device_data.handle, cs, 1);
+    if (FDwfDigitalSpiSelect(device_data->handle, cs, 1) == 0) {
+        device.check_error(device_data);
+    }
 
     // dummy write
-    FDwfDigitalSpiWriteOne(device_data.handle, 1, 0, 0);
-    state.on = true;
-    state.off = false;
-    state.frequency = clk_frequency;
-    state.order = order;
-    state.mode = mode;
+    if (FDwfDigitalSpiWriteOne(device_data->handle, 1, 0, 0) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> wf::SPI::read(Device::Data device_data, int count, int cs) {
+std::vector<unsigned char> wf::SPI::read(Device::Data *device_data, int count, int cs) {
     /*
         receives data from SPI
 
@@ -72,23 +87,29 @@ std::vector<unsigned char> wf::SPI::read(Device::Data device_data, int count, in
         return:     - integer list containing the received bytes
     */
     // enable the chip select line
-    FDwfDigitalSpiSelect(device_data.handle, cs, 0);
+    if (FDwfDigitalSpiSelect(device_data->handle, cs, 0) == 0) {
+        device.check_error(device_data);
+    }
 
     // create buffer to store data
     std::vector<unsigned char> buffer(count);
 
     // read array of 8 bit elements
-    FDwfDigitalSpiRead(device_data.handle, 1, 8, buffer.data(), buffer.size());
+    if (FDwfDigitalSpiRead(device_data->handle, 1, 8, buffer.data(), buffer.size()) == 0) {
+        device.check_error(device_data);
+    }
 
     // disable the chip select line
-    FDwfDigitalSpiSelect(device_data.handle, cs, 1);
+    if (FDwfDigitalSpiSelect(device_data->handle, cs, 1) == 0) {
+        device.check_error(device_data);
+    }
 
     return buffer;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::SPI::write(Device::Data device_data, std::string data, int cs) {
+void wf::SPI::write(Device::Data *device_data, std::string data, int cs) {
     /*
         send data through SPI
 
@@ -107,7 +128,7 @@ void wf::SPI::write(Device::Data device_data, std::string data, int cs) {
 
 /* ----------------------------------------------------- */
 
-void wf::SPI::write(Device::Data device_data, std::vector<unsigned char> data, int cs) {
+void wf::SPI::write(Device::Data *device_data, std::vector<unsigned char> data, int cs) {
     /*
         send data through SPI
 
@@ -116,19 +137,25 @@ void wf::SPI::write(Device::Data device_data, std::vector<unsigned char> data, i
                     - chip select line number
     */
     // enable the chip select line
-    FDwfDigitalSpiSelect(device_data.handle, cs, 0);
+    if (FDwfDigitalSpiSelect(device_data->handle, cs, 0) == 0) {
+        device.check_error(device_data);
+    }
 
     // write array of 8 bit elements
-    FDwfDigitalSpiWrite(device_data.handle, 1, 8, data.data(), data.size());
+    if (FDwfDigitalSpiWrite(device_data->handle, 1, 8, data.data(), data.size()) == 0) {
+        device.check_error(device_data);
+    }
 
     // disable the chip select line
-    FDwfDigitalSpiSelect(device_data.handle, cs, 1);
+    if (FDwfDigitalSpiSelect(device_data->handle, cs, 1) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::string tx_data, int count, int cs) {
+std::vector<unsigned char> wf::SPI::exchange(Device::Data *device_data, std::string tx_data, int count, int cs) {
     /*
         sends and receives data using the SPI interface
         
@@ -149,7 +176,7 @@ std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::stri
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int cs) {
+std::vector<unsigned char> wf::SPI::exchange(Device::Data *device_data, std::vector<unsigned char> tx_data, int count, int cs) {
     /*
         sends and receives data using the SPI interface
         
@@ -161,16 +188,22 @@ std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::vect
         return:     - integer list containing the received bytes
     */
     // enable the chip select line
-    FDwfDigitalSpiSelect(device_data.handle, cs, 0);
+    if (FDwfDigitalSpiSelect(device_data->handle, cs, 0) == 0) {
+        device.check_error(device_data);
+    }
 
     // create buffer to store data
     std::vector<unsigned char> rx_data(count);
 
     // write to MOSI and read from MISO
-    FDwfDigitalSpiWriteRead(device_data.handle, 1, 8, tx_data.data(), tx_data.size(), rx_data.data(), rx_data.size());
+    if (FDwfDigitalSpiWriteRead(device_data->handle, 1, 8, tx_data.data(), tx_data.size(), rx_data.data(), rx_data.size()) == 0) {
+        device.check_error(device_data);
+    }
 
     // disable the chip select line
-    FDwfDigitalSpiSelect(device_data.handle, cs, 1);
+    if (FDwfDigitalSpiSelect(device_data->handle, cs, 1) == 0) {
+        device.check_error(device_data);
+    }
 
     // decode data
     return rx_data;
@@ -198,32 +231,32 @@ std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::vect
     unsigned long long temp_miso = 0;
 
     // record mode
-    FDwfDigitalInAcquisitionModeSet(device_data.handle, acqmodeRecord);
+    if (FDwfDigitalInAcquisitionModeSet(device_data->handle, acqmodeRecord);
 
     // for sync mode set divider to -1 
-    FDwfDigitalInDividerSet(device_data.handle, -1);
+    if (FDwfDigitalInDividerSet(device_data->handle, -1);
 
     // 8 bit per sample format, DIO 0-7
-    FDwfDigitalInSampleFormatSet(device_data.handle, 8);
+    if (FDwfDigitalInSampleFormatSet(device_data->handle, 8);
 
     // continuous sampling 
-    FDwfDigitalInTriggerPositionSet(device_data.handle, -1);
+    if (FDwfDigitalInTriggerPositionSet(device_data->handle, -1);
 
     // in sync mode the trigger is used for sampling condition
     // trigger detector mask: low & high & (rising | falling)
-    FDwfDigitalInTriggerSet(device_data.handle, 0, 0, (1 << sck) | (1 << cs), 0);
+    if (FDwfDigitalInTriggerSet(device_data->handle, 0, 0, (1 << sck) | (1 << cs), 0);
     // sample on clock rising edge for sampling bits, or CS rising edge to detect frames
 
     // start detection
-    FDwfDigitalInConfigure(device_data.handle, 0, 1);
+    if (FDwfDigitalInConfigure(device_data->handle, 0, 1);
 
     // fill buffer
     unsigned char status = 0;
     int available = 0;
     int lost = 0;
     int corrupted = 0;
-    FDwfDigitalInStatus(device_data.handle, 1, &status);
-    FDwfDigitalInStatusRecord(device_data.handle, &available, &lost, &corrupted);
+    if (FDwfDigitalInStatus(device_data->handle, 1, &status);
+    if (FDwfDigitalInStatusRecord(device_data->handle, &available, &lost, &corrupted);
 
     // check data integrity
     if (lost != 0) {
@@ -240,7 +273,7 @@ std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::vect
     
     // load data from internal buffer
     vector<unsigned char> rx_data(available);
-    FDwfDigitalInStatusData(device_data.handle, rx_data.data(), available);
+    if (FDwfDigitalInStatusData(device_data->handle, rx_data.data(), available);
 
     // get message
     int bit_count = 0;
@@ -289,13 +322,13 @@ std::vector<unsigned char> wf::SPI::exchange(Device::Data device_data, std::vect
 
 /* ----------------------------------------------------- */
 
-void wf::SPI::close(Device::Data device_data) {
+void wf::SPI::close(Device::Data *device_data) {
     /*
         reset the spi interface
     */
-    FDwfDigitalSpiReset(device_data.handle);
-    state.on = false;
-    state.off = true;
+    if (FDwfDigitalSpiReset(device_data->handle) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 

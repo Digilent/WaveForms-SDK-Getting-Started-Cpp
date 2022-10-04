@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void wf::I2C::open(Device::Data device_data, int sda, int scl, double clk_rate, bool stretching, std::string *error) {
+void wf::I2C::open(Device::Data *device_data, int sda, int scl, double clk_rate, bool stretching) {
     /*
         initializes I2C communication
 
@@ -16,49 +16,59 @@ void wf::I2C::open(Device::Data device_data, int sda, int scl, double clk_rate, 
                     - stretching (enables/disables clock stretching)
     */
     // reset the interface
-    FDwfDigitalI2cReset(device_data.handle);
+    if (FDwfDigitalI2cReset(device_data->handle) == 0) {
+        device.check_error(device_data);
+    }
 
     // clock stretching
     if (stretching == true) {
-        FDwfDigitalI2cStretchSet(device_data.handle, 1);
+        if (FDwfDigitalI2cStretchSet(device_data->handle, 1) == 0) {
+            device.check_error(device_data);
+        }
     }
     else {
-        FDwfDigitalI2cStretchSet(device_data.handle, 0);
+        if (FDwfDigitalI2cStretchSet(device_data->handle, 0) == 0) {
+            device.check_error(device_data);
+        }
     }
 
     // set clock frequency
-    FDwfDigitalI2cRateSet(device_data.handle, clk_rate);
-    state.frequency = clk_rate;
+    if (FDwfDigitalI2cRateSet(device_data->handle, clk_rate) == 0) {
+        device.check_error(device_data);
+    }
 
     //  set communication lines
-    FDwfDigitalI2cSclSet(device_data.handle, scl);
-    FDwfDigitalI2cSdaSet(device_data.handle, sda);
+    if (FDwfDigitalI2cSclSet(device_data->handle, scl) == 0) {
+        device.check_error(device_data);
+    }
+    if (FDwfDigitalI2cSdaSet(device_data->handle, sda) == 0) {
+        device.check_error(device_data);
+    }
 
     // check bus
     int nak = 0;
-    FDwfDigitalI2cClear(device_data.handle, &nak);
+    if (FDwfDigitalI2cClear(device_data->handle, &nak) == 0) {
+        device.check_error(device_data);
+    }
     if (nak == 0) {
-        *error = "Error: I2C bus lockup";
-        return;
+        device_data->warning.instrument = "protocol/i2c";
+        device_data->warning.function = "open";
+        device_data->warning.message = "I2C bus lockup";
+        throw device_data->warning;
     }
 
 
     // write 0 bytes
-    FDwfDigitalI2cWrite(device_data.handle, 0, 0, 0, &nak);
-    if (nak != 0) {
-        *error = "NAK: index " + std::to_string(nak);
-        return;
+    if (FDwfDigitalI2cWrite(device_data->handle, 0, 0, 0, &nak) == 0) {
+        device.check_error(device_data);
     }
-    
-    state.on = true;
-    state.off = false;
-    *error = "";
+    check_warning(device_data, nak);
     return;
 }
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> wf::I2C::read(Device::Data device_data, int count, int address, std::string *error) {
+std::vector<unsigned char> wf::I2C::read(Device::Data *device_data, int count, int address) {
     /*
         receives data from I2C
         
@@ -72,20 +82,18 @@ std::vector<unsigned char> wf::I2C::read(Device::Data device_data, int count, in
     // receive
     int nak = 0;
     std::vector<unsigned char> data(count);
-    FDwfDigitalI2cRead(device_data.handle, address << 1, data.data(), data.size(), &nak);
+    if (FDwfDigitalI2cRead(device_data->handle, address << 1, data.data(), data.size(), &nak) == 0) {
+        device.check_error(device_data);
+    }
 
     // check for not acknowledged
-    *error = "";
-    if (nak != 0) {
-        *error = "NAK: index " + std::to_string(nak);
-    }
-    
+    check_warning(device_data, nak);
     return data;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::I2C::write(Device::Data device_data, std::string data, int address, std::string *error) {
+void wf::I2C::write(Device::Data *device_data, std::string data, int address) {
     /*
         send data through I2C
         
@@ -99,13 +107,13 @@ void wf::I2C::write(Device::Data device_data, std::string data, int address, std
     for (int index = 0; index < buffer.size(); index++) {
         buffer[index] = (unsigned char)(data[index]);
     }
-    write(device_data, buffer, address, error);
+    write(device_data, buffer, address);
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::I2C::write(Device::Data device_data, std::vector<unsigned char> data, int address, std::string *error) {
+void wf::I2C::write(Device::Data *device_data, std::vector<unsigned char> data, int address) {
     /*
         send data through I2C
         
@@ -116,20 +124,18 @@ void wf::I2C::write(Device::Data device_data, std::vector<unsigned char> data, i
     */
     // send
     int nak = 0;
-    FDwfDigitalI2cWrite(device_data.handle, address << 1, data.data(), data.size(), &nak);
+    if (FDwfDigitalI2cWrite(device_data->handle, address << 1, data.data(), data.size(), &nak) == 0) {
+        device.check_error(device_data);
+    }
 
     // check for not acknowledged
-    *error = "";
-    if (nak != 0) {
-        *error = "NAK: index " + std::to_string(nak);
-    }
-    
+    check_warning(device_data, nak);
     return;
 }
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> wf::I2C::exchange(Device::Data device_data, std::string tx_data, int count, int address, std::string *error) {
+std::vector<unsigned char> wf::I2C::exchange(Device::Data *device_data, std::string tx_data, int count, int address) {
     /*
         sends and receives data using the I2C interface
         
@@ -147,12 +153,12 @@ std::vector<unsigned char> wf::I2C::exchange(Device::Data device_data, std::stri
         buffer[index] = (unsigned char)(tx_data[index]);
     }
 
-    return exchange(device_data, buffer, count, address, error);
+    return exchange(device_data, buffer, count, address);
 }
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> wf::I2C::exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int address, std::string *error) {
+std::vector<unsigned char> wf::I2C::exchange(Device::Data *device_data, std::vector<unsigned char> tx_data, int count, int address) {
     /*
         sends and receives data using the I2C interface
         
@@ -166,13 +172,12 @@ std::vector<unsigned char> wf::I2C::exchange(Device::Data device_data, std::vect
     // send and receive
     int nak = 0;
     std::vector<unsigned char> rx_data(count);
-    FDwfDigitalI2cWriteRead(device_data.handle, address << 1, tx_data.data(), tx_data.size(), rx_data.data(), rx_data.size(), &nak);
+    if (FDwfDigitalI2cWriteRead(device_data->handle, address << 1, tx_data.data(), tx_data.size(), rx_data.data(), rx_data.size(), &nak) == 0) {
+        device.check_error(device_data);
+    }
 
     // check for not acknowledged
-    *error = "";
-    if (nak != 0) {
-        *error = "NAK: index " + std::to_string(nak);
-    }
+    check_warning(device_data, nak);
     return rx_data;
 }
 
@@ -192,14 +197,14 @@ std::vector<unsigned char> wf::I2C::exchange(Device::Data device_data, std::vect
 /*    i2c_data data;
 
     // start the interfcae
-    FDwfDigitalI2cSpyStart(device_data.handle);
+    if (FDwfDigitalI2cSpyStart(device_data->handle);
 
     // read data
     int start = 0;
     int stop = 0;
     vector<unsigned char> rx_data(count);
     int nak = 0;
-    if (FDwfDigitalI2cSpyStatus(device_data.handle, &start, &stop, rx_data.data(), &count, &nak) == 0) {
+    if (if (FDwfDigitalI2cSpyStatus(device_data->handle, &start, &stop, rx_data.data(), &count, &nak) == 0) {
         string error = "Communication with the device failed.";
         data.error = error;
     }
@@ -245,12 +250,27 @@ std::vector<unsigned char> wf::I2C::exchange(Device::Data device_data, std::vect
 
 /* ----------------------------------------------------- */
 
-void wf::I2C::close(Device::Data device_data) {
+void wf::I2C::close(Device::Data *device_data) {
     /*
         reset the i2c interface
     */
-    FDwfDigitalI2cReset(device_data.handle);
-    state.on = false;
-    state.off = true;
+    if (FDwfDigitalI2cReset(device_data->handle) == 0) {
+        device.check_error(device_data);
+    }
+    return;
+}
+
+/* ----------------------------------------------------- */
+
+void wf::I2C::check_warning(Device::Data *device_data, int nak, const char *caller) {
+    /*
+        check for I2C errors
+    */
+    if (nak != 0) {
+        device_data->warning.instrument = "protocol/i2c";
+        device_data->warning.function = caller;
+        device_data->warning.message = " -> NAK: index " + std::to_string(nak);
+        throw device_data->warning;
+    }
     return;
 }

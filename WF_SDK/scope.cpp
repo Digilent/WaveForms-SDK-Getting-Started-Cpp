@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void wf::Scope::open(Device::Data device_data, double sampling_frequency, int buffer_size, double offset, double amplitude_range) {
+void wf::Scope::open(Device::Data *device_data, double sampling_frequency, int buffer_size, double offset, double amplitude_range) {
     /*
         initialize the oscilloscope
 
@@ -17,37 +17,46 @@ void wf::Scope::open(Device::Data device_data, double sampling_frequency, int bu
     */
     // set global variables
     data.sampling_frequency = sampling_frequency;
-    data.max_buffer_size = device_data.analog.input.max_buffer_size;
+    data.max_buffer_size = device_data->analog.input.max_buffer_size;
     // enable all channels
-    FDwfAnalogInChannelEnableSet(device_data.handle, -1, true);
+    if (FDwfAnalogInChannelEnableSet(device_data->handle, -1, true) == 0) {
+        device.check_error(device_data);
+    }
     
     // set offset voltage (in Volts)
-    FDwfAnalogInChannelOffsetSet(device_data.handle, -1, offset);
+    if (FDwfAnalogInChannelOffsetSet(device_data->handle, -1, offset) == 0) {
+        device.check_error(device_data);
+    }
     
     // set range (maximum signal amplitude in Volts)
-    FDwfAnalogInChannelRangeSet(device_data.handle, -1, amplitude_range);
+    if (FDwfAnalogInChannelRangeSet(device_data->handle, -1, amplitude_range) == 0) {
+        device.check_error(device_data);
+    }
     
     // set the buffer size (data point in a recording)
     if (buffer_size == 0 || buffer_size > data.max_buffer_size) {
         buffer_size = data.max_buffer_size;
     }
     data.buffer_size = buffer_size;
-    FDwfAnalogInBufferSizeSet(device_data.handle, buffer_size);
+    if (FDwfAnalogInBufferSizeSet(device_data->handle, buffer_size) == 0) {
+        device.check_error(device_data);
+    }
     
     // set the acquisition frequency (in Hz)
-    FDwfAnalogInFrequencySet(device_data.handle, sampling_frequency);
+    if (FDwfAnalogInFrequencySet(device_data->handle, sampling_frequency) == 0) {
+        device.check_error(device_data);
+    }
     
     // disable averaging (for more info check the documentation)
-    FDwfAnalogInChannelFilterSet(device_data.handle, -1, filterDecimate);
-    
-    state.on = true;
-    state.off = false;
+    if (FDwfAnalogInChannelFilterSet(device_data->handle, -1, filterDecimate) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-double wf::Scope::measure(Device::Data device_data, int channel) {
+double wf::Scope::measure(Device::Data *device_data, int channel) {
     /*
         measure a voltage
 
@@ -57,20 +66,26 @@ double wf::Scope::measure(Device::Data device_data, int channel) {
         returns:    - the measured voltage in Volts
     */
     // set up the instrument
-    FDwfAnalogInConfigure(device_data.handle, false, false);
+    if (FDwfAnalogInConfigure(device_data->handle, false, false) == 0) {
+        device.check_error(device_data);
+    }
     
     // read data to an internal buffer
-    FDwfAnalogInStatus(device_data.handle, false, 0);
+    if (FDwfAnalogInStatus(device_data->handle, false, 0) == 0) {
+        device.check_error(device_data);
+    }
     
     // extract data from that buffer
     double voltage = 0; // variable to store the measured voltage
-    FDwfAnalogInStatusSample(device_data.handle, channel - 1, &voltage);
+    if (FDwfAnalogInStatusSample(device_data->handle, channel - 1, &voltage) == 0) {
+        device.check_error(device_data);
+    }
     return voltage;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Scope::trigger(Device::Data device_data, bool enable, const TRIGSRC source, int channel, double timeout, bool edge_rising, double level) {
+void wf::Scope::trigger(Device::Data *device_data, bool enable, const TRIGSRC source, int channel, double timeout, bool edge_rising, double level) {
     /*
         set up triggering
 
@@ -84,45 +99,59 @@ void wf::Scope::trigger(Device::Data device_data, bool enable, const TRIGSRC sou
     */
     if (enable && source != trigsrcNone) {
         // enable/disable auto triggering
-        FDwfAnalogInTriggerAutoTimeoutSet(device_data.handle, timeout);
+        if (FDwfAnalogInTriggerAutoTimeoutSet(device_data->handle, timeout) == 0) {
+            device.check_error(device_data);
+        }
 
         // set trigger source
-        FDwfAnalogInTriggerSourceSet(device_data.handle, source);
+        if (FDwfAnalogInTriggerSourceSet(device_data->handle, source) == 0) {
+            device.check_error(device_data);
+        }
 
         // set trigger channel
         if (source == trigsrcDetectorAnalogIn) {
             channel--;  // decrement analog channel index
         }
-        FDwfAnalogInTriggerChannelSet(device_data.handle, channel);
+        if (FDwfAnalogInTriggerChannelSet(device_data->handle, channel) == 0) {
+            device.check_error(device_data);
+        }
 
         // set trigger type
-        FDwfAnalogInTriggerTypeSet(device_data.handle, trigtypeEdge);
+        if (FDwfAnalogInTriggerTypeSet(device_data->handle, trigtypeEdge) == 0) {
+            device.check_error(device_data);
+        }
 
         // set trigger level
-        FDwfAnalogInTriggerLevelSet(device_data.handle, level);
+        if (FDwfAnalogInTriggerLevelSet(device_data->handle, level) == 0) {
+            device.check_error(device_data);
+        }
 
         // set trigger edge
         if (edge_rising) {
             // rising edge
-            FDwfAnalogInTriggerConditionSet(device_data.handle, trigcondRisingPositive);
+            if (FDwfAnalogInTriggerConditionSet(device_data->handle, trigcondRisingPositive) == 0) {
+                device.check_error(device_data);
+            }
         }
         else {
             // falling edge
-            FDwfAnalogInTriggerConditionSet(device_data.handle, trigcondFallingNegative);
+            if (FDwfAnalogInTriggerConditionSet(device_data->handle, trigcondFallingNegative) == 0) {
+                device.check_error(device_data);
+            }
         }
-        state.trigger = true;
     }
     else {
         // turn off the trigger
-        FDwfAnalogInTriggerSourceSet(device_data.handle, trigsrcNone);
-        state.trigger = false;
+        if (FDwfAnalogInTriggerSourceSet(device_data->handle, trigsrcNone) == 0) {
+            device.check_error(device_data);
+        }
     }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-std::vector<double> wf::Scope::record(Device::Data device_data, int channel) {
+std::vector<double> wf::Scope::record(Device::Data *device_data, int channel) {
     /*
         record an analog signal
 
@@ -132,12 +161,16 @@ std::vector<double> wf::Scope::record(Device::Data device_data, int channel) {
         returns:    - buffer - a list with the recorded voltages
     */
     // set up the instrument
-    FDwfAnalogInConfigure(device_data.handle, false, true);
+    if (FDwfAnalogInConfigure(device_data->handle, false, true) == 0) {
+        device.check_error(device_data);
+    }
     
     // read data to an internal buffer
     while (true) {
         unsigned char status = 0;   // variable to store buffer status
-        FDwfAnalogInStatus(device_data.handle, true, &status);
+        if (FDwfAnalogInStatus(device_data->handle, true, &status) == 0) {
+            device.check_error(device_data);
+        }
     
         // check internal buffer status
         if (status == DwfStateDone) {
@@ -148,19 +181,20 @@ std::vector<double> wf::Scope::record(Device::Data device_data, int channel) {
     
     // copy buffer
     std::vector<double> buffer(data.buffer_size);  // try to create an empty buffer
-    FDwfAnalogInStatusData(device_data.handle, channel - 1, buffer.data(), data.buffer_size);
+    if (FDwfAnalogInStatusData(device_data->handle, channel - 1, buffer.data(), data.buffer_size) == 0) {
+        device.check_error(device_data);
+    }
     return buffer;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Scope::close(Device::Data device_data) {
+void wf::Scope::close(Device::Data *device_data) {
     /*
         reset the scope
     */
-    FDwfAnalogInReset(device_data.handle);
-    state.on = false;
-    state.off = true;
-    state.trigger = false;
+    if (FDwfAnalogInReset(device_data->handle) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }

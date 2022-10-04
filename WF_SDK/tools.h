@@ -31,7 +31,7 @@ class Tools {
         int get_time(void);
         std::string get_date(void);
         void sleep(int millis);
-        void keyboard_interrupt_reset(Device::Data device_data);
+        void keyboard_interrupt_reset(Device::Data *device_data);
         template <typename T>
         inline T const& min(T const& a, T const& b);
         template <typename T>

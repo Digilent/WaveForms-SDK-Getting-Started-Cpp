@@ -25,7 +25,7 @@ class DMM {
                 const DwfDmm temperature = DwfDmmTemperature;
         };
 
-        class State {
+        class Data {
             private:
                 class Nodes {
                     public:
@@ -48,15 +48,11 @@ class DMM {
                         }
                 };
             public:
-                bool on = false;
-                bool off = true;
                 int channel = -1;
                 DwfDmm mode = -1;
                 Nodes nodes;
-                State& operator=(const State &data) {
+                Data& operator=(const Data &data) {
                     if (this != &data) {
-                        on = data.on;
-                        off = data.off;
                         channel = data.channel;
                         mode = data.mode;
                         nodes = data.nodes;
@@ -66,10 +62,10 @@ class DMM {
         };
     public:
         Mode mode;
-        State state;
-        void open(Device::Data device_data);
-        double measure(Device::Data device_data, DwfDmm mode, double range = 0, bool high_impedance = false);
-        void close(Device::Data device_data);
+        Data data;
+        void open(Device::Data *device_data);
+        double measure(Device::Data *device_data, DwfDmm mode, double range = 0, bool high_impedance = false);
+        void close(Device::Data *device_data);
 } dmm;
 
 }

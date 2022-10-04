@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void wf::UART::open(Device::Data device_data, int rx, int tx, int baud_rate, bool parity, int data_bits, int stop_bits) {
+void wf::UART::open(Device::Data *device_data, int rx, int tx, int baud_rate, bool parity, int data_bits, int stop_bits) {
     /*
         initializes UART communication
         
@@ -18,15 +18,22 @@ void wf::UART::open(Device::Data device_data, int rx, int tx, int baud_rate, boo
                     - stop_bits (default is 1)
     */
     // set baud rate
-    FDwfDigitalUartRateSet(device_data.handle, double(baud_rate));
-    state.baud_rate = double(baud_rate);
+    if (FDwfDigitalUartRateSet(device_data->handle, double(baud_rate)) == 0) {
+        device.check_error(device_data);
+    }
 
     // set communication channels
-    FDwfDigitalUartTxSet(device_data.handle, tx);
-    FDwfDigitalUartRxSet(device_data.handle, rx);
+    if (FDwfDigitalUartTxSet(device_data->handle, tx) == 0) {
+        device.check_error(device_data);
+    }
+    if (FDwfDigitalUartRxSet(device_data->handle, rx) == 0) {
+        device.check_error(device_data);
+    }
 
     // set data bit count
-    FDwfDigitalUartBitsSet(device_data.handle, data_bits);
+    if (FDwfDigitalUartBitsSet(device_data->handle, data_bits) == 0) {
+        device.check_error(device_data);
+    }
 
     // set parity bit requirements
     int par = 0;
@@ -39,10 +46,14 @@ void wf::UART::open(Device::Data device_data, int rx, int tx, int baud_rate, boo
     else {
         par = 0;
     }
-    FDwfDigitalUartParitySet(device_data.handle, par);
+    if (FDwfDigitalUartParitySet(device_data->handle, par) == 0) {
+        device.check_error(device_data);
+    }
 
     // set stop bit count
-    FDwfDigitalUartStopSet(device_data.handle, double(stop_bits));
+    if (FDwfDigitalUartStopSet(device_data->handle, double(stop_bits)) == 0) {
+        device.check_error(device_data);
+    }
 
     // initialize channels with idle levels
 
@@ -50,18 +61,20 @@ void wf::UART::open(Device::Data device_data, int rx, int tx, int baud_rate, boo
     char* dummy_buffer1 = nullptr;
     int dummy_buffer2 = 0;
     int dummy_parity_flag = 0;
-    FDwfDigitalUartRx(device_data.handle, dummy_buffer1, 0, &dummy_buffer2, &dummy_parity_flag);
+    if (FDwfDigitalUartRx(device_data->handle, dummy_buffer1, 0, &dummy_buffer2, &dummy_parity_flag) == 0) {
+        device.check_error(device_data);
+    }
 
     // dummy write
-    FDwfDigitalUartTx(device_data.handle, dummy_buffer1, 0);
-    state.on = true;
-    state.off = false;
+    if (FDwfDigitalUartTx(device_data->handle, dummy_buffer1, 0) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned char> wf::UART::read(Device::Data device_data, std::string *error) {
+std::vector<unsigned char> wf::UART::read(Device::Data *device_data) {
     /*
         receives data from UART
         
@@ -72,7 +85,7 @@ std::vector<unsigned char> wf::UART::read(Device::Data device_data, std::string 
                     - error message or empty string
     */
     // variable to store results
-    std::vector<char> rx_data(device_data.digital.input.max_buffer_size);
+    std::vector<char> rx_data(device_data->digital.input.max_buffer_size);
     std::vector<unsigned char> data;
 
     // character counter
@@ -82,7 +95,9 @@ std::vector<unsigned char> wf::UART::read(Device::Data device_data, std::string 
     int parity_flag = 0;
 
     // read up to 8k characters
-    FDwfDigitalUartRx(device_data.handle, rx_data.data(), rx_data.size() - 1, &count, &parity_flag);
+    if (FDwfDigitalUartRx(device_data->handle, rx_data.data(), rx_data.size() - 1, &count, &parity_flag) == 0) {
+        device.check_error(device_data);
+    }
 
     // append current data chunks
     int index = 0;
@@ -99,7 +114,9 @@ std::vector<unsigned char> wf::UART::read(Device::Data device_data, std::string 
         parity_flag = 0;
 
         // read up to 8k characters
-        FDwfDigitalUartRx(device_data.handle, rx_data.data(), rx_data.size() - 1, &count, &parity_flag);
+        if (FDwfDigitalUartRx(device_data->handle, rx_data.data(), rx_data.size() - 1, &count, &parity_flag) == 0) {
+            device.check_error(device_data);
+        }
 
         // append current data chunks
         for ( ; index < count; index++) {
@@ -108,10 +125,16 @@ std::vector<unsigned char> wf::UART::read(Device::Data device_data, std::string 
 
         // check for not acknowledged
         if (parity_flag < 0) {
-            *error = "Buffer overflow";
+            device_data->warning.instrument = "protocol/uart";
+            device_data->warning.function = "read";
+            device_data->warning.message = "Buffer overflow";
+            throw device_data->warning;
         }
         else if (parity_flag > 0) {
-            *error = "Parity error: index " + std::to_string(parity_flag);
+            device_data->warning.instrument = "protocol/uart";
+            device_data->warning.function = "read";
+            device_data->warning.message = "Parity error: index " + std::to_string(parity_flag);
+            throw device_data->warning;
         }
     }
     return data;
@@ -119,25 +142,24 @@ std::vector<unsigned char> wf::UART::read(Device::Data device_data, std::string 
 
 /* ----------------------------------------------------- */
 
-void wf::UART::write(Device::Data device_data, std::string data) {
+void wf::UART::write(Device::Data *device_data, std::string data) {
     /*
         send data through UART
         
         parameters: - data of type string
     */
-    // encode the string into a C string
-    std::vector<char> buffer(data.size() + 1);
+    //  create buffer to write
+    std::vector<unsigned char> buffer(data.size() + 1);
     for (int index = 0; index < buffer.size(); index++) {
-        buffer[index] = (char)(data[index]);
+        buffer[index] = (unsigned char)(data[index]);
     }
-    // send text, trim zero ending
-    FDwfDigitalUartTx(device_data.handle, buffer.data(), buffer.size() - 1);
+    write(device_data, buffer);
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::UART::write(Device::Data device_data, std::vector<unsigned char> data) {
+void wf::UART::write(Device::Data *device_data, std::vector<unsigned char> data) {
     /*
         send data through UART
         
@@ -149,16 +171,20 @@ void wf::UART::write(Device::Data device_data, std::vector<unsigned char> data) 
         buffer[index] = (char)(data[index]);
     }
     // send text, trim zero ending
-    FDwfDigitalUartTx(device_data.handle, buffer.data(), buffer.size() - 1);
+    if (FDwfDigitalUartTx(device_data->handle, buffer.data(), buffer.size() - 1) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::UART::close(Device::Data device_data) {
+void wf::UART::close(Device::Data *device_data) {
     /*
         reset the uart interface
     */
-    FDwfDigitalUartReset(device_data.handle);
+    if (FDwfDigitalUartReset(device_data->handle) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }

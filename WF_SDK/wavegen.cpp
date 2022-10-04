@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void wf::Wavegen::generate(Device::Data device_data, int channel, FUNC function, double offset, double frequency, double amplitude, double symmetry, double wait, double run_time, int repeat, std::vector<double> data) {
+void wf::Wavegen::generate(Device::Data *device_data, int channel, FUNC function, double offset, double frequency, double amplitude, double symmetry, double wait, double run_time, int repeat, std::vector<double> data) {
     /*
         generate an analog signal
 
@@ -23,88 +23,99 @@ void wf::Wavegen::generate(Device::Data device_data, int channel, FUNC function,
     */
     // enable channel
     channel--;
-    FDwfAnalogOutNodeEnableSet(device_data.handle, channel, AnalogOutNodeCarrier, true);
+    if (FDwfAnalogOutNodeEnableSet(device_data->handle, channel, AnalogOutNodeCarrier, true) == 0) {
+        device.check_error(device_data);
+    }
     
     // set function type
-    FDwfAnalogOutNodeFunctionSet(device_data.handle, channel, AnalogOutNodeCarrier, function);
+    if (FDwfAnalogOutNodeFunctionSet(device_data->handle, channel, AnalogOutNodeCarrier, function) == 0) {
+        device.check_error(device_data);
+    }
     
     // load data if the function type is custom
     if (function == funcCustom) {
-        FDwfAnalogOutNodeDataSet(device_data.handle, channel, AnalogOutNodeCarrier, data.data(), data.size());
+        if (FDwfAnalogOutNodeDataSet(device_data->handle, channel, AnalogOutNodeCarrier, data.data(), data.size()) == 0) {
+            device.check_error(device_data);
+        }
     }
     
     // set frequency
-    FDwfAnalogOutNodeFrequencySet(device_data.handle, channel, AnalogOutNodeCarrier, frequency);
+    if (FDwfAnalogOutNodeFrequencySet(device_data->handle, channel, AnalogOutNodeCarrier, frequency) == 0) {
+        device.check_error(device_data);
+    }
     
     // set amplitude or DC voltage
-    FDwfAnalogOutNodeAmplitudeSet(device_data.handle, channel, AnalogOutNodeCarrier, amplitude);
+    if (FDwfAnalogOutNodeAmplitudeSet(device_data->handle, channel, AnalogOutNodeCarrier, amplitude) == 0) {
+        device.check_error(device_data);
+    }
     
     // set offset
-    FDwfAnalogOutNodeOffsetSet(device_data.handle, channel, AnalogOutNodeCarrier, offset);
+    if (FDwfAnalogOutNodeOffsetSet(device_data->handle, channel, AnalogOutNodeCarrier, offset) == 0) {
+        device.check_error(device_data);
+    }
     
     // set symmetry
-    FDwfAnalogOutNodeSymmetrySet(device_data.handle, channel, AnalogOutNodeCarrier, symmetry);
+    if (FDwfAnalogOutNodeSymmetrySet(device_data->handle, channel, AnalogOutNodeCarrier, symmetry) == 0) {
+        device.check_error(device_data);
+    }
     
     // set running time limit
-    FDwfAnalogOutRunSet(device_data.handle, channel, run_time);
+    if (FDwfAnalogOutRunSet(device_data->handle, channel, run_time) == 0) {
+        device.check_error(device_data);
+    }
     
     // set wait time before start
-    FDwfAnalogOutWaitSet(device_data.handle, channel, wait);
+    if (FDwfAnalogOutWaitSet(device_data->handle, channel, wait) == 0) {
+        device.check_error(device_data);
+    }
     
     // set number of repeating cycles
-    FDwfAnalogOutRepeatSet(device_data.handle, channel, repeat);
+    if (FDwfAnalogOutRepeatSet(device_data->handle, channel, repeat) == 0) {
+        device.check_error(device_data);
+    }
     
     // start
-    FDwfAnalogOutConfigure(device_data.handle, channel, true);
-    state.on = true;
-    state.off = false;
-    state.channel[channel] = true;
+    if (FDwfAnalogOutConfigure(device_data->handle, channel, true) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Wavegen::close(Device::Data device_data, int channel) {
+void wf::Wavegen::close(Device::Data *device_data, int channel) {
     /*
         reset the wavegen
     */
     channel--;
-    FDwfAnalogOutReset(device_data.handle, channel);
-    state.on = false;
-    state.off = true;
-    if (channel >= 0) {
-        state.channel[channel] = false;
-    }
-    else {
-        state.channel.clear();
-        state.channel.insert(state.channel.end(), false);
-        state.channel.insert(state.channel.end(), false);
+    if (FDwfAnalogOutReset(device_data->handle, channel) == 0) {
+        device.check_error(device_data);
     }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Wavegen::enable(Device::Data device_data, int channel) {
+void wf::Wavegen::enable(Device::Data *device_data, int channel) {
     /*
         enables an analog output channel
     */
     channel--;
-    FDwfAnalogOutConfigure(device_data.handle, channel, true);
-    state.on = true;
-    state.off = false;
-    state.channel[channel] = true;
+    if (FDwfAnalogOutConfigure(device_data->handle, channel, true) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Wavegen::disable(Device::Data device_data, int channel) {
+void wf::Wavegen::disable(Device::Data *device_data, int channel) {
     /*
         disables an analog output channel
     */
     channel--;
-    FDwfAnalogOutConfigure(device_data.handle, channel, false);
-    state.channel[channel] = false;
+    if (FDwfAnalogOutConfigure(device_data->handle, channel, false) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }

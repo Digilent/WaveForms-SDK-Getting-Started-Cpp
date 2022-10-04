@@ -5,20 +5,13 @@
 #include <algorithm>
 #include "dwf.h"
 #include "device.h"
+#include "tools.h"
 
 #ifndef WF_SUPPLIES
 #define WF_SUPPLIES
 namespace wf {
 
 class Supplies {
-    private:
-        class State {
-            public:
-                bool on = false;
-                bool off = true;
-        };
-        double min(double a, double b);
-        double max(double a, double b);
     public:
         class Data {
             public:
@@ -48,9 +41,8 @@ class Supplies {
                     return *this;
                 }
         };
-        State state;
-        void switch_(Device::Data device_data, Data supplies_data);
-        void close(Device::Data device_data);
+        void switch_(Device::Data *device_data, Data supplies_data);
+        void close(Device::Data *device_data);
 } supplies;
 
 }

@@ -6,6 +6,7 @@
 #include <string>
 #include "dwf.h"
 #include "device.h"
+#include "tools.h"
 
 #ifndef WF_STATIC
 #define WF_STATIC
@@ -14,12 +15,8 @@ namespace wf {
 class Static {
     private:
         unsigned int rotate_left(unsigned int number, unsigned int position, unsigned int size = 16);
-        double min(double a, double b) {return (a < b) ? a : b;}
-        double max(double a, double b) {return (a > b) ? a : b;}
-        int min(int a, int b) {return (a < b) ? a : b;}
-        int max(int a, int b) {return (a > b) ? a : b;}
 
-        class State {
+        class Data {
             public:
                 int channel = -1;
                 int count = 0;
@@ -39,7 +36,7 @@ class Static {
                             return *this;
                         }
                 } nodes;
-                State& operator=(const State &data) {
+                Data& operator=(const Data &data) {
                     if (this != &data) {
                         channel = data.channel;
                         count = data.count;
@@ -57,14 +54,14 @@ class Static {
         };
 
     public:
-        State state;
+        Data data;
         Pull pull;
-        void set_mode(Device::Data device_data, int channel, bool output);
-        bool get_state(Device::Data device_data, int channel);
-        void set_state(Device::Data device_data, int channel, bool value);
-        void set_current(Device::Data device_data, double current);
-        void set_pull(Device::Data device_data, int channel, double dirtection);
-        void close(Device::Data device_data);
+        void set_mode(Device::Data *device_data, int channel, bool output);
+        bool get_state(Device::Data *device_data, int channel);
+        void set_state(Device::Data *device_data, int channel, bool value);
+        void set_current(Device::Data *device_data, double current);
+        void set_pull(Device::Data *device_data, int channel, double dirtection);
+        void close(Device::Data *device_data);
 } static_;
 
 }

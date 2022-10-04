@@ -3,6 +3,7 @@
 /* include the necessary libraries */
 #include <string>
 #include <vector>
+#include <cstdio>
 #include "dwf.h"
 #include "../device.h"
 
@@ -12,6 +13,7 @@ namespace wf {
 
 class I2C {
     private:
+        void check_warning(Device::Data *device_data, int nak, const char *caller = __builtin_FUNCTION());
         /*class Data {
             public:
                 std::vector<unsigned char> data;
@@ -32,31 +34,15 @@ class I2C {
                 }
         };*/
 
-        class State {
-            public:
-                bool on = false;
-                bool off = true;
-                double frequency = 0;
-                State& operator=(const State &data) {
-                    if (this != &data) {
-                        on = data.on;
-                        off = data.off;
-                        frequency = data.frequency;
-                    }
-                    return *this;
-                }
-        };
-
     public:
-        State state;
-        void open(Device::Data device_data, int sda, int scl, double clk_rate = 100e03, bool stretching = true, std::string *error=NULL);
-        std::vector<unsigned char> read(Device::Data device_data, int count, int address, std::string *error=NULL);
-        void write(Device::Data device_data, std::string data, int address, std::string *error=NULL);
-        void write(Device::Data device_data, std::vector<unsigned char> data, int address, std::string *error=NULL);
-        std::vector<unsigned char> exchange(Device::Data device_data, std::string tx_data, int count, int address, std::string *error=NULL);
-        std::vector<unsigned char> exchange(Device::Data device_data, std::vector<unsigned char> tx_data, int count, int address, std::string *error=NULL);
+        void open(Device::Data *device_data, int sda, int scl, double clk_rate = 100e03, bool stretching = true);
+        std::vector<unsigned char> read(Device::Data *device_data, int count, int address);
+        void write(Device::Data *device_data, std::string data, int address);
+        void write(Device::Data *device_data, std::vector<unsigned char> data, int address);
+        std::vector<unsigned char> exchange(Device::Data *device_data, std::string tx_data, int count, int address);
+        std::vector<unsigned char> exchange(Device::Data *device_data, std::vector<unsigned char> tx_data, int count, int address);
         //std::vector<unsigned char> spy(Device::Data device_data, int count = 16);
-        void close(Device::Data device_data);
+        void close(Device::Data *device_data);
 } i2c;
 
 }

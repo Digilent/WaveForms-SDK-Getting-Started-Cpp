@@ -6,21 +6,46 @@
 #include <map>
 #include <iostream>
 #include <vector>
+#include <cstdio>
 #include "dwf.h"
 
 #ifndef WF_DEVICE
 #define WF_DEVICE
 namespace wf {
 
+class Error {
+    public:
+        std::string message;
+        std::string function;
+        std::string instrument;
+        Error& operator=(const Error& data) {
+            if (this != &data) {
+                message = data.message;
+                function = data.function;
+                instrument = data.instrument;
+            }
+            return *this;
+        }
+};
+
+class Warning {
+    public:
+        std::string message;
+        std::string function;
+        std::string instrument;
+        Warning& operator=(const Warning& data) {
+            if (this != &data) {
+                message = data.message;
+                function = data.function;
+                instrument = data.instrument;
+            }
+            return *this;
+        }
+};
+
 class Device {
     // private class definitions
 private:
-    class State {
-    public:
-        bool connected = false;
-        bool disconnected = true;
-        std::string error = "";
-    };
 
     // public class definitions
 public:
@@ -173,6 +198,8 @@ public:
         HDWF handle = 0;
         std::string name = "";
         std::string version = "";
+        Error error;
+        Warning warning;
         analog_data analog;
         digital_data digital;
 
@@ -181,6 +208,8 @@ public:
                 handle = data.handle;
                 name = data.name;
                 version = data.version;
+                error = data.error;
+                warning = data.warning;
                 analog = data.analog;
                 digital = data.digital;
             }
@@ -194,11 +223,10 @@ private:
 
     // public function definitions
 public:
-    State state;
-    Data open(std::string device = "", int config = 0);
-    void check_error(Data device_data);
-    void close(Data device_data);
-    double temperature(Data device_data);
+    Data* open(std::string device = "", int config = 0);
+    void check_error(Data *device_data, const char *caller = __builtin_FUNCTION(), const char *file = __FILE__);
+    void close(Data *device_data);
+    double temperature(Data *device_data);
 } device;
 
 }

@@ -5,7 +5,7 @@
 
 /* ----------------------------------------------------- */
 
-void wf::Logic::open(Device::Data device_data, double sampling_frequency, int buffer_size) {
+void wf::Logic::open(Device::Data *device_data, double sampling_frequency, int buffer_size) {
     /*
         initialize the logic analyzer
 
@@ -16,33 +16,38 @@ void wf::Logic::open(Device::Data device_data, double sampling_frequency, int bu
     
     //set global variables
     data.sampling_frequency = sampling_frequency;
-    data.max_buffer_size = device_data.digital.input.max_buffer_size;
+    data.max_buffer_size = device_data->digital.input.max_buffer_size;
 
     // get internal clock frequency
     double internal_frequency = 0;
-    FDwfDigitalInInternalClockInfo(device_data.handle, &internal_frequency);
+    if (FDwfDigitalInInternalClockInfo(device_data->handle, &internal_frequency) == 0) {
+        device.check_error(device_data);
+    }
     
     // set clock frequency divider (needed for lower frequency input signals)
-    FDwfDigitalInDividerSet(device_data.handle, int(internal_frequency / sampling_frequency));
+    if (FDwfDigitalInDividerSet(device_data->handle, int(internal_frequency / sampling_frequency)) == 0) {
+        device.check_error(device_data);
+    }
     
     // set 16-bit sample format
-    FDwfDigitalInSampleFormatSet(device_data.handle, 16);
+    if (FDwfDigitalInSampleFormatSet(device_data->handle, 16) == 0) {
+        device.check_error(device_data);
+    }
     
     // set buffer size
     if (buffer_size == 0 || buffer_size > data.max_buffer_size) {
         buffer_size = data.max_buffer_size;
     }
     data.buffer_size = buffer_size;
-    FDwfDigitalInBufferSizeSet(device_data.handle, buffer_size);
-
-    state.on = true;
-    state.off = false;
+    if (FDwfDigitalInBufferSizeSet(device_data->handle, buffer_size) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-void wf::Logic::trigger(Device::Data device_data, bool enable, int channel, int position, double timeout, bool rising_edge, double length_min, double length_max, int count) {
+void wf::Logic::trigger(Device::Data *device_data, bool enable, int channel, int position, double timeout, bool rising_edge, double length_min, double length_max, int count) {
     /*
         set up triggering
 
@@ -59,45 +64,65 @@ void wf::Logic::trigger(Device::Data device_data, bool enable, int channel, int 
 
     // set trigger source to digital I/O lines, or turn it off
     if (enable == true) {
-        FDwfDigitalInTriggerSourceSet(device_data.handle, trigsrcDetectorDigitalIn);
-        state.trigger = true;
+        if (FDwfDigitalInTriggerSourceSet(device_data->handle, trigsrcDetectorDigitalIn) == 0) {
+            device.check_error(device_data);
+        }
     }
     else {
-        FDwfDigitalInTriggerSourceSet(device_data.handle, trigsrcNone);
-        state.trigger = false;
+        if (FDwfDigitalInTriggerSourceSet(device_data->handle, trigsrcNone) == 0) {
+            device.check_error(device_data);
+        }
         return;
     }
     
     // set starting position and prefill
-    position = min(data.buffer_size, max(0, position));
-    FDwfDigitalInTriggerPositionSet(device_data.handle, data.buffer_size - position);
-    FDwfDigitalInTriggerPrefillSet(device_data.handle, position);
+    position = tools.min(data.buffer_size, tools.max(0, position));
+    if (FDwfDigitalInTriggerPositionSet(device_data->handle, data.buffer_size - position) == 0) {
+        device.check_error(device_data);
+    }
+    if (FDwfDigitalInTriggerPrefillSet(device_data->handle, position) == 0) {
+        device.check_error(device_data);
+    }
 
     // set trigger condition
     channel = int(1 << channel);
     if (rising_edge == false) {
-        FDwfDigitalInTriggerSet(device_data.handle, channel, 0, 0, 0);
-        FDwfDigitalInTriggerResetSet(device_data.handle, 0, 0, 0, channel);
+        if (FDwfDigitalInTriggerSet(device_data->handle, channel, 0, 0, 0) == 0) {
+            device.check_error(device_data);
+        }
+        if (FDwfDigitalInTriggerResetSet(device_data->handle, 0, 0, 0, channel) == 0) {
+            device.check_error(device_data);
+        }
     }
     else {
-        FDwfDigitalInTriggerSet(device_data.handle, 0, channel, 0, 0);
-        FDwfDigitalInTriggerResetSet(device_data.handle, 0, 0, channel, 0);
+        if (FDwfDigitalInTriggerSet(device_data->handle, 0, channel, 0, 0) == 0) {
+            device.check_error(device_data);
+        }
+        if (FDwfDigitalInTriggerResetSet(device_data->handle, 0, 0, channel, 0) == 0) {
+            device.check_error(device_data);
+        }
     }
     
     // set auto triggering
-    FDwfDigitalInTriggerAutoTimeoutSet(device_data.handle, timeout);
+    if (FDwfDigitalInTriggerAutoTimeoutSet(device_data->handle, timeout) == 0) {
+        device.check_error(device_data);
+    }
     
     // set sequence length to activate trigger
-    FDwfDigitalInTriggerLengthSet(device_data.handle, length_min, length_max, 0);
+    if (FDwfDigitalInTriggerLengthSet(device_data->handle, length_min, length_max, 0) == 0) {
+        device.check_error(device_data);
+    }
 
     // set event counter
-    FDwfDigitalInTriggerCountSet(device_data.handle, count, 0);
+    if (FDwfDigitalInTriggerCountSet(device_data->handle, count, 0) == 0) {
+        device.check_error(device_data);
+    }
     return;
 }
 
 /* ----------------------------------------------------- */
 
-std::vector<unsigned short> wf::Logic::record(Device::Data device_data, int channel) {
+std::vector<unsigned short> wf::Logic::record(Device::Data *device_data, int channel) {
     /*
         initialize the logic analyzer
 
@@ -108,12 +133,16 @@ std::vector<unsigned short> wf::Logic::record(Device::Data device_data, int chan
     */
     
     // set up the instrument
-    FDwfDigitalInConfigure(device_data.handle, false, true);
+    if (FDwfDigitalInConfigure(device_data->handle, false, true) == 0) {
+        device.check_error(device_data);
+    }
     
     // read data to an internal buffer
     while (true) {
         unsigned char status = 0;    // variable to store buffer status
-        FDwfDigitalInStatus(device_data.handle, true, &status);
+        if (FDwfDigitalInStatus(device_data->handle, true, &status) == 0) {
+            device.check_error(device_data);
+        }
     
         if (status == stsDone) {
             // exit loop when finished
@@ -123,7 +152,9 @@ std::vector<unsigned short> wf::Logic::record(Device::Data device_data, int chan
 
     // get samples
     std::vector<unsigned short> buffer(data.buffer_size);
-    FDwfDigitalInStatusData(device_data.handle, buffer.data(), 2 * data.buffer_size);
+    if (FDwfDigitalInStatusData(device_data->handle, buffer.data(), 2 * data.buffer_size) == 0) {
+        device.check_error(device_data);
+    }
 
     // get channel specific data
     for (int index = 0; index < data.buffer_size; index++) {
@@ -135,31 +166,12 @@ std::vector<unsigned short> wf::Logic::record(Device::Data device_data, int chan
 
 /* ----------------------------------------------------- */
 
-void wf::Logic::close(Device::Data device_data) {
+void wf::Logic::close(Device::Data *device_data) {
     /*
         reset the instrument
     */
-    FDwfDigitalInReset(device_data.handle);
-    state.on = false;
-    state.off = true;
-    state.trigger = false;
+    if (FDwfDigitalInReset(device_data->handle) == 0) {
+        device.check_error(device_data);
+    }
     return;
-}
-
-/* ----------------------------------------------------- */
-
-int wf::Logic::min(int a, int b) {
-    if (a < b) {
-        return a;
-    }
-    return b;
-}
-
-/* ----------------------------------------------------- */
-
-int wf::Logic::max(int a, int b) {
-    if (a > b) {
-        return a;
-    }
-    return b;
 }
