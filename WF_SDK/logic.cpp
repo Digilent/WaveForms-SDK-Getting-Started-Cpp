@@ -75,7 +75,7 @@ void wf::Logic::trigger(Device::Data device_data, bool enable, int channel, int 
 
     // set trigger condition
     channel = int(1 << channel);
-    if (rising_edge == true) {
+    if (rising_edge == false) {
         FDwfDigitalInTriggerSet(device_data.handle, channel, 0, 0, 0);
         FDwfDigitalInTriggerResetSet(device_data.handle, 0, 0, 0, channel);
     }
